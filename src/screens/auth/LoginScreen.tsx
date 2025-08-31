@@ -263,7 +263,10 @@ const LoginScreen: React.FC<Props> = ({ route, navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' 
+          ? (Platform.isPad ? 'padding' : 'position') 
+          : 'height'
+        }
         style={{ flex: 1 }}
       >
         <ScrollView

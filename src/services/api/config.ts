@@ -11,7 +11,7 @@ const getApiUrl = () => {
     // For mobile devices, you may need to use your machine's IP
     // Replace with your actual IP if testing on a real device
     return Platform.select({
-      ios: 'http://localhost:8000/api',
+      ios: process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000/api',
       android: 'http://10.0.2.2:8000/api', // Android emulator localhost
       default: 'http://localhost:8000/api',
     });

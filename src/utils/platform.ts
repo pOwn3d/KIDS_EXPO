@@ -1,4 +1,4 @@
-import { Platform, Dimensions } from 'react-native';
+import { Platform, Dimensions, PixelRatio } from 'react-native';
 import { DeviceInfo, ResponsiveBreakpoints, PlatformInfo } from '../types/app';
 
 // Default responsive breakpoints
@@ -15,8 +15,8 @@ export const BREAKPOINTS: ResponsiveBreakpoints = {
 export const getDeviceInfo = (): DeviceInfo => {
   const { width, height } = Dimensions.get('window');
   const pixelRatio = Platform.select({
-    ios: require('react-native').PixelRatio.get(),
-    android: require('react-native').PixelRatio.get(),
+    ios: PixelRatio.get(),
+    android: PixelRatio.get(),
     web: typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1,
     default: 1,
   });

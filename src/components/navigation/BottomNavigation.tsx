@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, TouchableOpacity, Text, StyleSheet, Animated, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../hooks/useSimpleTheme';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -18,6 +19,7 @@ const BottomNavigation: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<string>('home');
   const [animatedValues] = useState<{ [key: string]: Animated.Value }>({
     home: new Animated.Value(0),
@@ -178,7 +180,7 @@ const BottomNavigation: React.FC = () => {
       </View>
       
       {/* Safe area for iPhone */}
-      {Platform.OS === 'ios' && <View style={styles.safeAreaBottom} />}
+      {Platform.OS === 'ios' && <View style={[styles.safeAreaBottom, { height: insets.bottom }]} />}
     </View>
   );
 };
@@ -241,7 +243,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
   },
   safeAreaBottom: {
-    height: 20,
     backgroundColor: 'transparent',
   },
 });

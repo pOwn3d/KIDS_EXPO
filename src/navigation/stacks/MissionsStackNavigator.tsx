@@ -29,7 +29,7 @@ const MissionsStackNavigator: React.FC = () => {
         options={{ title: 'Missions' }} 
       />
       <Stack.Screen 
-        name="MissionDetails" 
+        name="MissionDetail" 
         component={MissionDetailScreen} 
         options={{ title: 'Détails de la mission' }} 
       />

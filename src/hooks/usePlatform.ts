@@ -18,11 +18,17 @@ export const useDeviceInfo = (): DeviceInfo => {
   const [deviceInfo, setDeviceInfo] = useState<DeviceInfo>(getDeviceInfo);
 
   useEffect(() => {
-    const subscription = Dimensions.addEventListener('change', () => {
+    const handleChange = () => {
       setDeviceInfo(getDeviceInfo());
-    });
+    };
+    
+    const subscription = Dimensions.addEventListener('change', handleChange);
 
-    return () => subscription?.remove();
+    return () => {
+      if (subscription?.remove) {
+        subscription.remove();
+      }
+    };
   }, []);
 
   return deviceInfo;
@@ -35,11 +41,17 @@ export const usePlatform = (): PlatformInfo => {
   const [platformInfo, setPlatformInfo] = useState<PlatformInfo>(getPlatformInfo);
 
   useEffect(() => {
-    const subscription = Dimensions.addEventListener('change', () => {
+    const handleChange = () => {
       setPlatformInfo(getPlatformInfo());
-    });
+    };
+    
+    const subscription = Dimensions.addEventListener('change', handleChange);
 
-    return () => subscription?.remove();
+    return () => {
+      if (subscription?.remove) {
+        subscription.remove();
+      }
+    };
   }, []);
 
   return platformInfo;

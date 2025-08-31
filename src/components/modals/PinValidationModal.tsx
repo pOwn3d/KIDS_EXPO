@@ -81,7 +81,10 @@ const PinValidationModal: React.FC<PinValidationModalProps> = ({
     >
       <KeyboardAvoidingView 
         style={styles.overlay}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' 
+          ? (Platform.isPad ? 'padding' : 'position') 
+          : 'height'
+        }
       >
         <View style={[styles.container, { backgroundColor: theme.colors.card }]}>
           {/* Header */}

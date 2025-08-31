@@ -214,7 +214,7 @@ const PinValidationModal: React.FC<PinValidationModalProps> = ({
           </View>
 
           {/* Info */}
-          <View style={[styles.infoBox, { backgroundColor: theme.colors.info + '10' }]}>
+          <View style={[styles.infoBox, { backgroundColor: `${theme.colors.info}10` }]}>
             <Ionicons name="information-circle" size={16} color={theme.colors.info} />
             <Text style={[styles.infoText, { color: theme.colors.info }]}>
               Ce code PIN protège les actions parentales

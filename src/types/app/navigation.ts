@@ -81,7 +81,7 @@ export type MissionsStackParamList = {
   MissionsList: {
     filter?: 'all' | 'assigned' | 'completed' | 'pending';
   };
-  MissionDetails: {
+  MissionDetail: {
     missionId: string;
   };
   CreateMission: {

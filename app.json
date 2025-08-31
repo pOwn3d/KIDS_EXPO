@@ -16,13 +16,14 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.kidspoints.app",
+      "bundleIdentifier": "org.name.KidsPoints",
       "buildNumber": "1.0.0",
       "infoPlist": {
         "NSCameraUsageDescription": "This app uses the camera for avatar photos.",
         "NSPhotoLibraryUsageDescription": "This app uses the photo library for avatar selection."
       }
     },
+    "scheme": "kidspoints",
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
@@ -64,8 +65,9 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "your-project-id"
+        "projectId": "e2d99904-d120-47f9-9163-261a13a58303"
       }
-    }
+    },
+    "owner": "christophelopez"
   }
 }
