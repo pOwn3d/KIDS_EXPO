@@ -13,6 +13,21 @@ export interface RefreshTokenRequest {
   refreshToken: string;
 }
 
+export interface RegisterRequest {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+}
+
+export interface RegisterWithInvitationRequest {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  invitationToken: string;
+}
+
 export interface User {
   id: string;
   email: string;

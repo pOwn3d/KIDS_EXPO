@@ -6,6 +6,9 @@ import {
   CreateChildDto,
   UpdateChildDto,
   ChildStats as ApiChildStats,
+  ChildStatistics,
+  ChildActivity,
+  AgeGroup,
   Mission,
   MissionStatus,
   MissionCategory,
@@ -14,13 +17,13 @@ import {
   Reward,
   RewardClaim,
   RewardCategory,
+  Achievement,
+  VirtualPet,
   RewardType,
   RewardAvailability,
   Tournament,
   Guild,
   Leaderboard,
-  Achievement,
-  VirtualPet,
   SkillTree,
   DailyWheel,
   SparkyConversation,
@@ -32,6 +35,13 @@ import {
   ParentalControls
 } from '../api';
 
+import { 
+  Punishment, 
+  AppliedPunishment,
+  PunishmentCategory,
+  PunishmentDifficulty
+} from '../api/punishments';
+
 import { AppTheme, PlatformInfo } from './index';
 
 // Redux Store Types
@@ -41,6 +51,7 @@ export interface RootState {
   missions: MissionsState;
   rewards: RewardsState;
   children: ChildrenState;
+  punishments: PunishmentsState;
   gamification: GamificationState;
   sparky: SparkyState;
   analytics: AnalyticsState;
@@ -59,6 +70,10 @@ export interface AuthState {
   lastActivity: number;
   pinProtected: boolean;
   pinValidUntil: number | null;
+  // Nouveaux champs pour les invitations
+  invitationToken: string | null;
+  invitationValid: boolean;
+  invitationData: { familyName?: string; parentName?: string } | null;
 }
 
 export interface UserPreferences {
@@ -87,6 +102,12 @@ export interface MissionsState {
   error: string | null;
   lastSyncAt: number | null;
   pendingActions: PendingAction[];
+  // Nouveaux champs pour les fonctionnalités avancées
+  recommendations: Mission[];
+  missionsByChild: Record<string | number, Mission[]>;
+  completedMissions: Mission[];
+  activeMissions: Mission[];
+  syncStatus: 'idle' | 'pending' | 'succeeded' | 'failed';
 }
 
 export interface RewardsState {
@@ -99,6 +120,14 @@ export interface RewardsState {
   isLoading: boolean;
   error: string | null;
   lastSyncAt: number | null;
+  // Nouveaux champs pour les fonctionnalités avancées
+  recommendations: Reward[];
+  availableRewards: Reward[];
+  childRewards: Record<string | number, Reward[]>;
+  pendingClaims: RewardClaim[];
+  approvedClaims: RewardClaim[];
+  rejectedClaims: RewardClaim[];
+  syncStatus: 'idle' | 'pending' | 'succeeded' | 'failed';
 }
 
 export interface ChildrenState {
@@ -108,6 +137,34 @@ export interface ChildrenState {
   error: string | null;
   stats: Record<string, ChildStats>;
   lastSyncAt: number | null;
+  // Nouveaux champs pour les fonctionnalités avancées
+  childStatistics: Record<string | number, ChildStatistics>;
+  childActivities: Record<string | number, ChildActivity[]>;
+  ageGroupFilters: AgeGroup[];
+  syncStatus: 'idle' | 'pending' | 'succeeded' | 'failed';
+}
+
+export interface PunishmentsState {
+  punishments: Punishment[];
+  appliedPunishments: AppliedPunishment[];
+  selectedPunishment: Punishment | null;
+  recommendations: Punishment[];
+  activePunishmentsByChild: Record<string | number, AppliedPunishment[]>;
+  historyByChild: Record<string | number, AppliedPunishment[]>;
+  categories: PunishmentCategory[];
+  filters: PunishmentFilters;
+  isLoading: boolean;
+  error: string | null;
+  lastSyncAt: number | null;
+  syncStatus: 'idle' | 'pending' | 'succeeded' | 'failed';
+}
+
+export interface PunishmentFilters {
+  ageGroup?: AgeGroup;
+  category?: PunishmentCategory;
+  difficulty?: PunishmentDifficulty;
+  isActive?: boolean;
+  search?: string;
 }
 
 export interface GamificationState {

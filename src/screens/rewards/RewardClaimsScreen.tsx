@@ -11,14 +11,23 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../hooks/useSimpleTheme';
-import { rewardsService, type RewardClaim } from '../../services/rewards.service';
+import { useRewards } from '../../hooks';
 import { usePinValidation } from '../../hooks/usePinValidation';
 import Toast from 'react-native-toast-message';
+import { RewardClaim } from '../../types/api/rewards';
 
 const RewardClaimsScreen: React.FC = () => {
   const theme = useTheme();
-  const [claims, setClaims] = useState<RewardClaim[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const {
+    rewardClaims,
+    isLoading,
+    error,
+    fetchRewardClaims,
+    validateClaim,
+    rejectClaim,
+    clearError,
+  } = useRewards();
+  
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedTab, setSelectedTab] = useState<'pending' | 'approved' | 'rejected'>('pending');
 
@@ -36,49 +45,45 @@ const RewardClaimsScreen: React.FC = () => {
   });
 
   useEffect(() => {
-    loadClaims();
-  }, []);
+    fetchRewardClaims();
+  }, [fetchRewardClaims]);
 
   const loadClaims = async () => {
     try {
-      setIsLoading(true);
-      const allClaims = await rewardsService.getRewardClaims();
-      setClaims(allClaims);
-    } catch (error) {
+      await fetchRewardClaims();
+    } catch (error: any) {
       console.error('Erreur chargement demandes:', error);
       Toast.show({
         type: 'error',
         text1: 'Erreur',
-        text2: 'Impossible de charger les demandes',
+        text2: error.message || 'Impossible de charger les demandes',
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await loadClaims();
-    setIsRefreshing(false);
+    try {
+      await fetchRewardClaims();
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   const handleApprove = (claim: RewardClaim) => {
     validateApprove(async () => {
       try {
-        const success = await rewardsService.validateRewardClaim(claim.id);
-        if (success) {
-          Toast.show({
-            type: 'success',
-            text1: 'Récompense approuvée',
-            text2: `La récompense de ${claim.childName} a été validée`,
-          });
-          await loadClaims();
-        }
-      } catch (error) {
+        await validateClaim(claim.id).unwrap();
+        Toast.show({
+          type: 'success',
+          text1: 'Récompense approuvée',
+          text2: `La récompense de ${claim.childName} a été validée`,
+        });
+      } catch (error: any) {
         Toast.show({
           type: 'error',
           text1: 'Erreur',
-          text2: 'Impossible de valider la récompense',
+          text2: error.message || 'Impossible de valider la récompense',
         });
       }
     });
@@ -96,20 +101,17 @@ const RewardClaimsScreen: React.FC = () => {
             style: 'destructive',
             onPress: async () => {
               try {
-                const success = await rewardsService.rejectRewardClaim(claim.id, 'Rejeté par le parent');
-                if (success) {
-                  Toast.show({
-                    type: 'info',
-                    text1: 'Récompense rejetée',
-                    text2: 'Les points ont été remboursés',
-                  });
-                  await loadClaims();
-                }
-              } catch (error) {
+                await rejectClaim(claim.id, 'Rejeté par le parent').unwrap();
+                Toast.show({
+                  type: 'info',
+                  text1: 'Récompense rejetée',
+                  text2: 'Les points ont été remboursés',
+                });
+              } catch (error: any) {
                 Toast.show({
                   type: 'error',
                   text1: 'Erreur',
-                  text2: 'Impossible de rejeter la récompense',
+                  text2: error.message || 'Impossible de rejeter la récompense',
                 });
               }
             },
@@ -119,7 +121,7 @@ const RewardClaimsScreen: React.FC = () => {
     });
   };
 
-  const filteredClaims = claims.filter(claim => claim.status === selectedTab);
+  const filteredClaims = rewardClaims.filter(claim => claim.status === selectedTab);
 
   const renderClaim = ({ item }: { item: RewardClaim }) => (
     <View style={[styles.claimCard, { backgroundColor: theme.colors.card }]}>
@@ -203,7 +205,7 @@ const RewardClaimsScreen: React.FC = () => {
               { color: selectedTab === 'pending' ? theme.colors.primary : theme.colors.textSecondary },
             ]}
           >
-            En attente ({claims.filter(c => c.status === 'pending').length})
+            En attente ({rewardClaims.filter(c => c.status === 'pending').length})
           </Text>
         </TouchableOpacity>
 

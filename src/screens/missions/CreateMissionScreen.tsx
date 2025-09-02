@@ -15,6 +15,7 @@ import { useTheme } from '../../hooks/useSimpleTheme';
 import { useNavigation } from '@react-navigation/native';
 import { missionsService } from '../../services/missions.service';
 import { childrenService, type Child } from '../../services/children.service';
+import { AppSpacing, CommonStyles } from '../../constants/spacing';
 
 interface MissionFormData {
   name: string;
@@ -369,73 +370,18 @@ const CreateMissionScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Platform.OS === 'web' ? 40 : 20,
-    paddingVertical: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  backButton: {
-    padding: 8,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    flex: 1,
-    textAlign: 'center',
-    marginHorizontal: 16,
-  },
-  saveButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  saveButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: Platform.OS === 'web' ? 40 : 20,
-  },
-  section: {
-    marginVertical: 16,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 8,
-  },
-  sectionSubtitle: {
-    fontSize: 14,
-    marginBottom: 12,
-  },
-  textInput: {
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
-    minHeight: 48,
-  },
-  textArea: {
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
-    minHeight: 100,
-  },
+  container: CommonStyles.container,
+  header: CommonStyles.header,
+  backButton: CommonStyles.backButton,
+  headerTitle: CommonStyles.headerTitle,
+  saveButton: CommonStyles.button,
+  saveButtonText: CommonStyles.buttonText,
+  content: CommonStyles.content,
+  section: CommonStyles.section,
+  sectionTitle: CommonStyles.sectionTitle,
+  sectionSubtitle: CommonStyles.sectionSubtitle,
+  textInput: CommonStyles.textInput,
+  textArea: CommonStyles.textArea,
   categoriesScroll: {
     flexDirection: 'row',
   },
@@ -491,43 +437,12 @@ const styles = StyleSheet.create({
   typeDescription: {
     fontSize: 14,
   },
-  childrenGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginTop: 8,
-  },
-  childCard: {
-    width: '48%',
-    marginRight: '2%',
-    marginBottom: 12,
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    alignItems: 'center',
-    position: 'relative',
-  },
-  childAvatar: {
-    fontSize: 32,
-    marginBottom: 8,
-  },
-  childName: {
-    fontSize: 14,
-    fontWeight: '500',
-    textAlign: 'center',
-  },
-  selectedBadge: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  bottomPadding: {
-    height: 40,
-  },
+  childrenGrid: CommonStyles.childrenGrid,
+  childCard: CommonStyles.childCard,
+  childAvatar: CommonStyles.childAvatar,
+  childName: CommonStyles.childName,
+  selectedBadge: CommonStyles.selectedBadge,
+  bottomPadding: CommonStyles.bottomPadding,
 });
 
 export default CreateMissionScreen;

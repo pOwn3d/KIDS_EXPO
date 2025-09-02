@@ -11,6 +11,48 @@ export type RootStackParamList = {
     screen: string;
     params?: any;
   };
+  // New screens accessible globally
+  Activities: {
+    childId?: number;
+  };
+  Badges: {
+    childId?: number;
+  };
+  BadgeDetails: {
+    badgeId: number;
+  };
+  Tournaments: {
+    childId?: number;
+  };
+  TournamentDetails: {
+    tournamentId: number;
+  };
+  Guilds: {
+    childId?: number;
+  };
+  GuildDetails: {
+    guildId: number;
+  };
+  Punishments: {
+    childId?: number;
+  };
+  Statistics: {
+    childId?: number;
+  };
+  Profile: undefined;
+  Settings: undefined;
+  More: {
+    childId?: number;
+  };
+  // Profile sub-screens
+  EditProfile: undefined;
+  ChangePassword: undefined;
+  ManageChildren: undefined;
+  Invitations: undefined;
+  Help: undefined;
+  About: undefined;
+  Terms: undefined;
+  Privacy: undefined;
 };
 
 // Auth Stack Navigator
@@ -19,7 +61,12 @@ export type AuthStackParamList = {
   Login: {
     userType?: 'parent' | 'child';
   };
-  Register: undefined;
+  Register: {
+    invitationToken?: string;
+  };
+  Invitation: {
+    invitationToken: string;
+  };
   ForgotPassword: undefined;
   PinSetup: {
     userId: string;
@@ -34,11 +81,8 @@ export type MainTabParamList = {
   Dashboard: NavigatorScreenParams<DashboardStackParamList>;
   Missions: NavigatorScreenParams<MissionsStackParamList>;
   Rewards: NavigatorScreenParams<RewardsStackParamList>;
-  Notifications: NavigatorScreenParams<NotificationsStackParamList>;
-  Validations?: NavigatorScreenParams<ValidationsStackParamList>;
-  Leaderboard: NavigatorScreenParams<LeaderboardStackParamList>;
+  More: undefined; // New More tab for additional features
   Profile: NavigatorScreenParams<ProfileStackParamList>;
-  Sparky: NavigatorScreenParams<SparkyStackParamList>;
 };
 
 // Desktop Drawer Navigator (replaces tabs on larger screens)
@@ -47,6 +91,9 @@ export type MainDrawerParamList = {
   Children: NavigatorScreenParams<ChildrenStackParamList>;
   Missions: NavigatorScreenParams<MissionsStackParamList>;
   Rewards: NavigatorScreenParams<RewardsStackParamList>;
+  Activities: undefined;
+  Badges: undefined;
+  Leaderboard: undefined;
   Analytics: NavigatorScreenParams<AnalyticsStackParamList>;
   Tournaments: NavigatorScreenParams<TournamentsStackParamList>;
   Guilds: NavigatorScreenParams<GuildsStackParamList>;

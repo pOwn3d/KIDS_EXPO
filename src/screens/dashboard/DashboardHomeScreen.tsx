@@ -1,5 +1,6 @@
 import React from 'react';
 import ParentDashboardScreen from './ParentDashboardScreen';
+import ResponsiveParentDashboard from './ResponsiveParentDashboard';
 import {
   View,
   Text,
@@ -165,6 +166,10 @@ const DashboardHomeScreen: React.FC<Props> = ({ navigation }) => {
   const isParent = userRole !== 'child' && userRole !== 'CHILD';
   
   if (isParent) {
+    // Use responsive dashboard for web, regular for mobile
+    if (platform.isDesktop || platform.isTablet) {
+      return <ResponsiveParentDashboard />;
+    }
     return <ParentDashboardScreen />;
   }
 
@@ -341,13 +346,43 @@ const DashboardHomeScreen: React.FC<Props> = ({ navigation }) => {
   ];
 
   const quickActions = userRole === 'PARENT' ? [
-    { title: 'Create Mission', icon: 'add-circle' as const, color: CrayonColors.successGreen },
-    { title: 'Add Reward', icon: 'gift' as const, color: CrayonColors.sunYellow },
-    { title: 'View Reports', icon: 'bar-chart' as const, color: CrayonColors.electricBlue },
+    { 
+      title: 'Create Mission', 
+      icon: 'add-circle' as const, 
+      color: CrayonColors.successGreen,
+      action: () => navigation.navigate('CreateMission' as never)
+    },
+    { 
+      title: 'Add Reward', 
+      icon: 'gift' as const, 
+      color: CrayonColors.sunYellow,
+      action: () => navigation.navigate('CreateReward' as never)
+    },
+    { 
+      title: 'View Reports', 
+      icon: 'bar-chart' as const, 
+      color: CrayonColors.electricBlue,
+      action: () => navigation.navigate('Statistics' as never)
+    },
   ] : [
-    { title: 'View Missions', icon: 'list' as const, color: CrayonColors.electricBlue },
-    { title: 'Shop Rewards', icon: 'storefront' as const, color: CrayonColors.sunYellow },
-    { title: 'Feed Pet', icon: 'heart' as const, color: CrayonColors.candyPink },
+    { 
+      title: 'View Missions', 
+      icon: 'list' as const, 
+      color: CrayonColors.electricBlue,
+      action: () => navigation.navigate('Missions' as never)
+    },
+    { 
+      title: 'Shop Rewards', 
+      icon: 'storefront' as const, 
+      color: CrayonColors.sunYellow,
+      action: () => navigation.navigate('Rewards' as never)
+    },
+    { 
+      title: 'Feed Pet', 
+      icon: 'heart' as const, 
+      color: CrayonColors.candyPink,
+      action: () => navigation.navigate('VirtualPet' as never)
+    },
   ];
 
   const recentActivities = [
@@ -420,7 +455,11 @@ const DashboardHomeScreen: React.FC<Props> = ({ navigation }) => {
                 type={stat.type}
                 progress={stat.progress}
                 onPress={() => {
-                  // Navigation to detailed view
+                  if (userRole === 'PARENT') {
+                    navigation.navigate('FamilyOverview' as never);
+                  } else {
+                    navigation.navigate('Profile' as never);
+                  }
                 }}
               />
             ))}
@@ -441,9 +480,7 @@ const DashboardHomeScreen: React.FC<Props> = ({ navigation }) => {
                 color={action.color as any}
                 size={isChildMode ? "large" : "medium"}
                 playful={isChildMode}
-                onPress={() => {
-                  // Handle action
-                }}
+                onPress={action.action}
               />
             ))}
           </View>

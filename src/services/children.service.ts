@@ -1,64 +1,19 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import apiClient from './api.interceptor';
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000';
-
-export interface Child {
-  id: string | number;
-  publicId?: string;
-  name: string;
-  firstName: string;
-  lastName?: string;
-  age: number;
-  avatar: string;
-  currentPoints: number;
-  level: number;
-  streak?: number;
-  completedMissions?: number;
-  activeMissions?: number;
-  badges?: Badge[];
-  statistics?: ChildStatistics;
-  theme?: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface Badge {
-  id: string | number;
-  name: string;
-  description: string;
-  icon: string;
-  earnedAt: string;
-}
-
-export interface ChildStatistics {
-  totalPoints: number;
-  pointsThisWeek: number;
-  pointsThisMonth: number;
-  missionsCompleted: number;
-  rewardsEarned: number;
-  averagePointsPerDay: number;
-  streak: number;
-  level: number;
-  weeklyProgress: WeeklyProgress[];
-}
-
-export interface WeeklyProgress {
-  date: string;
-  points: number;
-  missions: number;
-}
-
-export interface ChildActivity {
-  id: string | number;
-  type: 'mission_completed' | 'reward_claimed' | 'points_earned' | 'badge_earned' | 'level_up';
-  title: string;
-  description: string;
-  points?: number;
-  createdAt: string;
-  icon: string;
-  color: string;
-}
+import { apiClient } from './api/client';
+import { API_ENDPOINTS, API_URL } from '../config/api.config';
+import { 
+  Child,
+  ChildrenCollectionResponse,
+  CreateChildDto,
+  UpdateChildDto,
+  ChildStats,
+  ChildStatistics,
+  ChildActivity,
+  AgeGroup,
+  PointHistoryEntry
+} from '../types/api/children';
+import { Badge } from '../types/api/badges';
+import { Activity } from '../types/api/activities';
 
 class ChildrenService {
   private async getAuthToken(): Promise<string | null> {
@@ -75,87 +30,66 @@ class ChildrenService {
     }
   }
 
-  private async getAuthHeaders(token: string) {
-    return {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    };
-  }
 
   async getAllChildren(): Promise<Child[]> {
     try {
-      // Essayer les deux clés possibles pour le token
-      let token = await AsyncStorage.getItem('access_token');
-      if (!token) {
-        token = await AsyncStorage.getItem('auth_token');
-      }
-      
+      const token = await this.getAuthToken();
       if (!token) {
         console.warn('⚠️ No token found for children fetch');
         return [];
       }
 
-      console.log('🔍 Fetching children with token preview:', token.substring(0, 20) + '...');
+      console.log('🔍 Fetching children with API Platform endpoint...');
+      console.log('Token used:', token.substring(0, 20) + '...');
       
-      // Essayer d'abord l'endpoint parent account qui semble fonctionner
-      let response;
-      try {
-        console.log('🔄 Trying parent account endpoint for children...');
-        response = await apiClient.get(`${API_URL}/api/parent/account`, {
+      const response = await apiClient.get<ChildrenCollectionResponse>(
+        API_ENDPOINTS.CHILDREN.LIST,
+        {},
+        {
           headers: {
             Authorization: `Bearer ${token}`,
+            Accept: 'application/ld+json',
           },
-        });
-        
-        console.log('Parent account response:', {
-          status: response.status,
-          hasChildren: !!response.data?.data?.children,
-          childrenCount: response.data?.data?.childrenCount || 0
-        });
-        
-        // Si le parent account a des enfants, les utiliser
-        if (response.data?.data?.children) {
-          const childrenArray = response.data.data.children;
-          return childrenArray
-            .filter((child: any) => child && typeof child === 'object' && !Array.isArray(child))
-            .map((child: any) => this.mapChildData(child));
         }
-      } catch (parentError: any) {
-        console.log('⚠️ Parent account failed, trying children endpoint...', {
-          status: parentError.response?.status,
-          statusText: parentError.response?.statusText
-        });
+      );
+      
+      console.log('Raw response type:', typeof response);
+      
+      // Handle both direct array and hydra format
+      let childrenArray: any[] = [];
+      
+      if (Array.isArray(response)) {
+        // Direct array format
+        childrenArray = response;
+        console.log('✅ Children API response (direct array):', childrenArray.length, 'children');
+      } else if (response && typeof response === 'object') {
+        // Check for different object formats
+        if (response['hydra:member']) {
+          // Hydra format
+          childrenArray = response['hydra:member'];
+          console.log('✅ Children API response (hydra:member):', childrenArray.length, 'children');
+        } else if (response.member) {
+          // API Platform format
+          childrenArray = response.member;
+          console.log('✅ Children API response (member):', childrenArray.length, 'children');
+        } else {
+          console.log('⚠️ Unexpected response format - no member field found');
+          console.log('Response:', response);
+        }
+      } else {
+        console.log('⚠️ Unexpected response type:', typeof response);
       }
-      
-      // Fallback vers l'endpoint children v1 explicite
-      response = await apiClient.get(`${API_URL}/api/v1/children`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      
-      console.log('Children API response:', {
-        status: response.status,
-        dataType: typeof response.data,
-        isArray: Array.isArray(response.data),
-        hasData: !!response.data.data,
-        dataLength: Array.isArray(response.data) ? response.data.length : 'not array'
-      });
-      
-      // Utiliser exactement la même logique que dashboard.service
-      const childrenArray = Array.isArray(response.data) ? response.data : response.data.data || [];
 
       // Filter and map valid children
       return childrenArray
         .filter((child: any) => child && typeof child === 'object' && !Array.isArray(child))
-        .map((child: any) => this.mapChildData(child));
+        .map((child: Child) => this.mapChildData(child));
     } catch (error: any) {
       console.error('❌ Children fetch error details:', {
         status: error.response?.status,
         statusText: error.response?.statusText,
         data: error.response?.data,
-        url: error.config?.url,
-        method: error.config?.method
+        endpoint: API_ENDPOINTS.CHILDREN.LIST
       });
       return [];
     }
@@ -163,112 +97,113 @@ class ChildrenService {
 
   async getChildById(childId: string | number): Promise<Child | null> {
     try {
-      // Récupérer le token comme pour getAllChildren
-      let token = await AsyncStorage.getItem('access_token');
-      if (!token) {
-        token = await AsyncStorage.getItem('auth_token');
-      }
-      
+      const token = await this.getAuthToken();
       if (!token) {
         console.warn('⚠️ No token found for child fetch');
         return null;
       }
 
-      console.log(`🔍 Fetching child ${childId} with token preview:`, token.substring(0, 20) + '...');
+      console.log(`🔍 Fetching child ${childId} with API Platform endpoint...`);
       
-      // Utiliser l'endpoint standard comme dashboard.service
-      const response = await apiClient.get(`${API_URL}/api/children/${childId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await apiClient.get<Child>(
+        API_ENDPOINTS.CHILDREN.GET(childId),
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/ld+json',
+          },
+        }
+      );
       
       console.log(`Child ${childId} API response:`, {
-        status: response.status,
-        hasId: !!response.data.id,
-        hasData: !!response.data.data
+        id: response.id,
+        hasData: !!response
       });
-      
-      let childData = null;
-      if (response.data.data) {
-        childData = response.data.data;
-      } else if (response.data.id) {
-        childData = response.data;
-      }
 
-      return childData ? this.mapChildData(childData) : null;
-    } catch (error) {
+      return response ? this.mapChildData(response) : null;
+    } catch (error: any) {
       console.error('Error fetching child by ID:', error);
-      return null;
+      if (error.response?.status === 404) {
+        return null;
+      }
+      throw new Error(error.response?.data?.message || error.message || 'Failed to fetch child');
     }
   }
 
   async getChildStatistics(childId: string | number): Promise<ChildStatistics | null> {
     try {
-      let token = await AsyncStorage.getItem('access_token');
-      if (!token) {
-        token = await AsyncStorage.getItem('auth_token');
-      }
-      
+      const token = await this.getAuthToken();
       if (!token) {
         console.warn('⚠️ No token found for child statistics');
         return null;
       }
 
-      const response = await apiClient.get(`${API_URL}/api/children/${childId}/statistics`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      
-      let statsData = null;
-      if (response.data.success && response.data.data) {
-        statsData = response.data.data;
-      } else if (response.data.totalPoints !== undefined) {
-        statsData = response.data;
-      }
+      console.log(`🔍 Fetching child ${childId} statistics with API Platform...`);
 
-      return statsData ? {
-        totalPoints: statsData.totalPoints || 0,
-        pointsThisWeek: statsData.pointsThisWeek || 0,
-        pointsThisMonth: statsData.pointsThisMonth || 0,
-        missionsCompleted: statsData.missionsCompleted || 0,
-        rewardsEarned: statsData.rewardsEarned || 0,
-        averagePointsPerDay: statsData.averagePointsPerDay || 0,
-        streak: statsData.streak || 0,
-        level: statsData.level || 1,
-        weeklyProgress: statsData.weeklyProgress || []
+      const response = await apiClient.get<ChildStatistics>(
+        API_ENDPOINTS.CHILDREN.STATISTICS(childId),
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/ld+json',
+          },
+        }
+      );
+      
+      console.log(`Child ${childId} statistics response:`, {
+        totalPoints: response.totalPoints,
+        hasData: !!response
+      });
+
+      return response ? {
+        totalPoints: response.totalPoints || 0,
+        pointsThisWeek: response.pointsThisWeek || 0,
+        pointsThisMonth: response.pointsThisMonth || 0,
+        missionsCompleted: response.missionsCompleted || 0,
+        rewardsEarned: response.rewardsEarned || 0,
+        averagePointsPerDay: response.averagePointsPerDay || 0,
+        streak: response.streak || 0,
+        level: response.level || 1,
+        weeklyProgress: response.weeklyProgress || []
       } : null;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching child statistics:', error);
+      if (error.response?.status === 404) {
+        return null;
+      }
       return null;
     }
   }
 
   async getChildActivity(childId: string | number, limit: number = 10): Promise<ChildActivity[]> {
     try {
-      let token = await AsyncStorage.getItem('access_token');
-      if (!token) {
-        token = await AsyncStorage.getItem('auth_token');
-      }
-      
+      const token = await this.getAuthToken();
       if (!token) {
         console.warn('⚠️ No token found for child activity');
         return [];
       }
 
-      const response = await apiClient.get(`${API_URL}/api/children/${childId}/activity?limit=${limit}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      console.log(`🔍 Fetching child ${childId} activity with API Platform...`);
+
+      const response = await apiClient.get<{ 'hydra:member': any[] }>(
+        `${API_ENDPOINTS.CHILDREN.ACTIVITIES(childId)}?limit=${limit}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/ld+json',
+          },
+        }
+      );
       
-      let activitiesArray = [];
-      if (response.data.success && response.data.data) {
-        activitiesArray = Array.isArray(response.data.data) ? response.data.data : [response.data.data];
-      } else if (Array.isArray(response.data)) {
-        activitiesArray = response.data;
-      }
+      console.log(`Child ${childId} activity response:`, {
+        memberCount: response['hydra:member']?.length,
+        hasData: !!response
+      });
+
+      const activitiesArray = response['hydra:member'] || [];
 
       return activitiesArray
         .filter((activity: any) => activity && typeof activity === 'object')
@@ -282,7 +217,7 @@ class ChildrenService {
           icon: this.getActivityIcon(activity.type),
           color: this.getActivityColor(activity.type)
         }));
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching child activity:', error);
       return [];
     }
@@ -290,126 +225,262 @@ class ChildrenService {
 
   async getChildBadges(childId: string | number): Promise<Badge[]> {
     try {
-      const headers = await this.getAuthHeaders();
-      const response = await apiClient.get(`${API_URL}/api/v1/children/${childId}/badges`, { headers });
-      
-      let badgesArray = [];
-      if (response.data.success && response.data.data) {
-        badgesArray = Array.isArray(response.data.data) ? response.data.data : [response.data.data];
-      } else if (Array.isArray(response.data)) {
-        badgesArray = response.data;
+      const token = await this.getAuthToken();
+      if (!token) {
+        console.warn('⚠️ No token found for child badges');
+        return [];
       }
+
+      console.log(`🔍 Fetching child ${childId} badges with API Platform...`);
+
+      const response = await apiClient.get<{ 'hydra:member': any[] }>(
+        API_ENDPOINTS.CHILDREN.BADGES(childId),
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/ld+json',
+          },
+        }
+      );
+      
+      console.log(`Child ${childId} badges response:`, {
+        memberCount: response['hydra:member']?.length,
+        hasData: !!response
+      });
+
+      const badgesArray = response['hydra:member'] || [];
 
       return badgesArray
         .filter((badge: any) => badge && typeof badge === 'object')
         .map((badge: any) => ({
+          '@id': badge['@id'],
+          '@type': badge['@type'] || 'Badge',
           id: badge.id || badge.uuid || Math.random().toString(),
           name: badge.name || 'Badge',
           description: badge.description || '',
           icon: badge.icon || '🏆',
+          criteria: badge.criteria || 'Earned by completing tasks',
+          points: badge.points || 0,
+          isActive: badge.isActive !== false,
+          createdAt: badge.createdAt || badge.created_at,
+          updatedAt: badge.updatedAt || badge.updated_at,
           earnedAt: badge.earnedAt || badge.created_at || new Date().toISOString()
-        }));
-    } catch (error) {
+        } as Badge & { earnedAt: string }));
+    } catch (error: any) {
       console.error('Error fetching child badges:', error);
       return [];
     }
   }
 
-  async createChild(childData: {
-    name: string;
-    firstName: string;
-    lastName?: string;
-    age: number;
-    avatar?: string;
-  }): Promise<Child | null> {
+  async createChild(childData: CreateChildDto): Promise<Child | null> {
     try {
-      const headers = await this.getAuthHeaders();
-      const response = await apiClient.post(`${API_URL}/api/children`, childData, { headers });
-      
-      let newChildData = null;
-      if (response.data.success && response.data.data) {
-        newChildData = response.data.data;
-      } else if (response.data.id || response.data.publicId) {
-        newChildData = response.data;
+      const token = await this.getAuthToken();
+      if (!token) {
+        throw new Error('No authentication token');
       }
 
-      return newChildData ? this.mapChildData(newChildData) : null;
-    } catch (error) {
+      console.log('🔍 Creating child with API Platform...', {
+        name: childData.name,
+        firstName: childData.firstName,
+        endpoint: API_ENDPOINTS.CHILDREN.CREATE
+      });
+
+      const response = await apiClient.post<Child>(
+        API_ENDPOINTS.CHILDREN.CREATE,
+        childData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/ld+json',
+          },
+        }
+      );
+
+      console.log('Child creation response:', {
+        id: response.id,
+        name: response.name,
+        hasData: !!response
+      });
+
+      return response ? this.mapChildData(response) : null;
+    } catch (error: any) {
       console.error('Error creating child:', error);
-      throw error;
+      throw new Error(error.response?.data?.message || error.response?.data?.detail || error.message || 'Failed to create child');
     }
   }
 
-  async updateChild(childId: string | number, updates: Partial<Child>): Promise<Child | null> {
+  async updateChild(childId: string | number, updates: UpdateChildDto): Promise<Child | null> {
     try {
-      const headers = await this.getAuthHeaders();
-      const response = await apiClient.put(`${API_URL}/api/children/${childId}`, updates, { headers });
-      
-      let updatedChildData = null;
-      if (response.data.success && response.data.data) {
-        updatedChildData = response.data.data;
-      } else if (response.data.id || response.data.publicId) {
-        updatedChildData = response.data;
+      const token = await this.getAuthToken();
+      if (!token) {
+        throw new Error('No authentication token');
       }
 
-      return updatedChildData ? this.mapChildData(updatedChildData) : null;
-    } catch (error) {
+      console.log(`🔍 Updating child ${childId} with API Platform...`, {
+        updates,
+        endpoint: API_ENDPOINTS.CHILDREN.UPDATE(childId)
+      });
+
+      const response = await apiClient.put<Child>(
+        API_ENDPOINTS.CHILDREN.UPDATE(childId),
+        updates,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/ld+json',
+          },
+        }
+      );
+
+      console.log(`Child ${childId} update response:`, {
+        id: response.id,
+        name: response.name,
+        hasData: !!response
+      });
+
+      return response ? this.mapChildData(response) : null;
+    } catch (error: any) {
       console.error('Error updating child:', error);
-      throw error;
+      throw new Error(error.response?.data?.message || error.response?.data?.detail || error.message || 'Failed to update child');
     }
   }
 
   async deleteChild(childId: string | number): Promise<boolean> {
     try {
-      const headers = await this.getAuthHeaders();
-      await apiClient.delete(`${API_URL}/api/children/${childId}`, { headers });
+      const token = await this.getAuthToken();
+      if (!token) {
+        throw new Error('No authentication token');
+      }
+
+      console.log(`🔍 Deleting child ${childId} with API Platform...`);
+
+      await apiClient.delete(API_ENDPOINTS.CHILDREN.DELETE(childId), {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      console.log(`Child ${childId} deleted successfully`);
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting child:', error);
-      return false;
+      throw new Error(error.response?.data?.message || error.response?.data?.detail || error.message || 'Failed to delete child');
     }
   }
 
   async addPointsToChild(childId: string | number, points: number, reason?: string): Promise<boolean> {
     try {
-      const headers = await this.getAuthHeaders();
-      await apiClient.post(`${API_URL}/api/children/${childId}/points`, {
-        points,
-        reason
-      }, { headers });
+      const token = await this.getAuthToken();
+      if (!token) {
+        throw new Error('No authentication token');
+      }
+
+      console.log(`🔍 Adding ${points} points to child ${childId}...`, { reason });
+
+      await apiClient.post(
+        API_ENDPOINTS.CHILDREN.ADD_POINTS(childId),
+        {
+          points,
+          reason
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/ld+json',
+          },
+        }
+      );
+
+      console.log(`Successfully added ${points} points to child ${childId}`);
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding points to child:', error);
-      return false;
+      throw new Error(error.response?.data?.message || error.response?.data?.detail || error.message || 'Failed to add points to child');
     }
+  }
+
+  /**
+   * Calculer l'âge à partir de la date de naissance
+   */
+  private calculateAge(birthDate: string): number {
+    const birth = new Date(birthDate);
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+    
+    return age;
+  }
+
+  /**
+   * Déterminer le groupe d'âge selon DATABASE_CONTENT.md
+   */
+  private determineAgeGroup(age: number): AgeGroup {
+    if (age >= 3 && age <= 5) return '3-5';
+    if (age >= 6 && age <= 8) return '6-8';
+    if (age >= 9 && age <= 12) return '9-12';
+    if (age >= 13 && age <= 17) return '13-17';
+    
+    // Par défaut pour les âges non couverts
+    return age < 3 ? '3-5' : '13-17';
   }
 
   private mapChildData(data: any): Child {
     console.log('🔍 Mapping child data:', data);
     
-    // Calculate level from points
-    const level = Math.floor((data.currentPoints || data.current_points || data.points || 0) / 100) + 1;
+    // Calculer l'âge si birthDate est fourni, sinon utiliser l'âge existant
+    let age = data.age || 0;
+    if (data.birthDate) {
+      age = this.calculateAge(data.birthDate);
+    }
     
-    const mappedChild = {
-      // Utiliser l'ID interne, pas le publicId
-      id: data.id || data.uuid,
-      publicId: data.publicId || data.public_id,
+    // Déterminer le groupe d'âge
+    const ageGroup = this.determineAgeGroup(age);
+    
+    // Calculate level from points - compatibilité avec les deux formats
+    const currentPoints = data.currentPoints || data.current_points || data.points || 0;
+    const calculatedLevel = Math.floor(currentPoints / 100) + 1;
+    
+    const mappedChild: Child = {
+      '@id': data['@id'],
+      '@type': data['@type'] || 'Child',
+      id: data.id,
       name: data.name || data.firstName || data.first_name || 'Enfant',
-      firstName: data.firstName || data.first_name || data.name || 'Enfant',
-      lastName: data.lastName || data.last_name || '',
-      age: data.age || 0,
+      firstName: data.firstName || data.first_name || data.name,
+      lastName: data.lastName || data.last_name,
+      birthDate: data.birthDate,
+      age: age,
       avatar: data.avatar || '👦',
-      currentPoints: data.currentPoints || data.current_points || data.points || 0,
-      level: data.level || level,
+      currentPoints: currentPoints,
+      totalPointsEarned: data.totalPointsEarned || data.total_points_earned,
+      totalPointsSpent: data.totalPointsSpent || data.total_points_spent,
+      level: data.level || `level-${calculatedLevel}`, // API Platform retourne level as string
+      levelProgress: data.levelProgress || 0,
       streak: data.streak || 0,
-      completedMissions: data.completedMissions || data.missions_completed || 0,
-      activeMissions: data.activeMissions || data.active_missions || 0,
+      bestStreak: data.bestStreak || data.best_streak,
+      gems: data.gems || 0,
       theme: data.theme || 'default',
+      parentId: data.parentId || data.parent_id,
+      isActive: data.isActive !== false,
+      missions: data.missions || [],
+      badges: data.badges || [],
+      rewards: data.rewards || [],
+      pointsHistory: data.pointsHistory || [],
+      ageGroup: ageGroup, // Nouvelle propriété basée sur l'âge
       createdAt: data.createdAt || data.created_at,
       updatedAt: data.updatedAt || data.updated_at
     };
     
-    console.log('✅ Mapped child:', { id: mappedChild.id, name: mappedChild.name });
+    console.log('✅ Mapped child:', { 
+      id: mappedChild.id, 
+      name: mappedChild.name, 
+      age: mappedChild.age, 
+      ageGroup: mappedChild.ageGroup 
+    });
     return mappedChild;
   }
 
@@ -437,3 +508,4 @@ class ChildrenService {
 }
 
 export const childrenService = new ChildrenService();
+export type { Child, ChildStatistics, ChildActivity } from '../types/api/children';

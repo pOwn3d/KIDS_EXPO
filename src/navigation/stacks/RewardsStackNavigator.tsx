@@ -6,11 +6,13 @@ import RewardsListScreen from '../../screens/rewards/RewardsListScreen';
 const Stack = createNativeStackNavigator<RewardsStackParamList>();
 
 const RewardsStackNavigator: React.FC = () => (
-  <Stack.Navigator initialRouteName="RewardsShop">
+  <Stack.Navigator 
+    initialRouteName="RewardsShop"
+    screenOptions={{ headerShown: false }}
+  >
     <Stack.Screen 
       name="RewardsShop" 
       component={RewardsListScreen} 
-      options={{ title: 'Récompenses' }} 
     />
   </Stack.Navigator>
 );

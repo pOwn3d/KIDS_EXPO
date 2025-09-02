@@ -1,91 +1,109 @@
 export interface Reward {
-  id: string;
+  '@id'?: string;
+  '@type'?: string;
+  id: number;
   name: string;
   description: string;
   pointsCost: number;
   category: RewardCategory;
-  type: RewardType;
-  availability: RewardAvailability;
+  available: boolean;
+  child?: string; // IRI reference for child-specific rewards
+  childName?: string; // For display purposes
   imageUrl?: string;
-  maxStock?: number;
-  currentStock?: number;
-  isActive: boolean;
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-  restrictions?: RewardRestriction[];
+  ageGroup?: AgeGroup; // Added for age-based rewards
+  createdAt?: string;
+  updatedAt?: string;
 }
 
+// Categories based on DATABASE_CONTENT.md age groups  
 export type RewardCategory = 
-  | 'TREATS'
-  | 'ACTIVITIES'
-  | 'TOYS'
-  | 'SCREEN_TIME'
-  | 'OUTINGS'
-  | 'PRIVILEGES'
-  | 'MONEY'
-  | 'SPECIAL';
+  | 'entertainment'  // Histoire supplémentaire, dessin animé, etc.
+  | 'screen_time'    // Jeu vidéo, télé, etc.
+  | 'toy'           // Petit jouet, nouveau jeu, etc.
+  | 'outing'        // Parc, cinéma, piscine, sortie avec amis, etc.
+  | 'food'          // Glace, fast-food, restaurant, etc.
+  | 'money'         // Argent de poche, etc.
+  | 'social'        // Soirée pyjama, weekend chez un ami, etc.
+  | 'subscription'  // Abonnement streaming, forfait mobile, etc.
+  | 'gaming'        // Nouveau jeu vidéo, console, etc.
+  | 'privilege'     // Journée libre, sortie tardive, etc.
+  | 'shopping'      // Vêtement de marque, livre, BD, etc.
+  | 'education'     // Livre, BD, etc.
+  | 'general';      // Autres
 
-export type RewardType = 
-  | 'PHYSICAL'
-  | 'ACTIVITY'
-  | 'PRIVILEGE'
-  | 'DIGITAL'
-  | 'EXPERIENCE';
-
-export type RewardAvailability = 
-  | 'ALWAYS'
-  | 'WEEKDAYS'
-  | 'WEEKENDS'
-  | 'SPECIAL_OCCASIONS';
-
-export interface RewardRestriction {
-  type: 'AGE_MIN' | 'AGE_MAX' | 'LEVEL_MIN' | 'TIME_LIMIT' | 'CUSTOM';
-  value: any;
-  description: string;
-}
+import type { AgeGroup } from './children';
 
 export interface RewardClaim {
-  id: string;
-  rewardId: string;
-  childId: string;
-  pointsSpent: number;
-  status: RewardClaimStatus;
-  requestedAt: string;
-  approvedAt?: string;
+  '@id'?: string;
+  '@type'?: string;
+  id: number;
+  reward: string; // IRI reference to reward
+  child: string; // IRI reference to child
+  rewardName?: string; // For display purposes
+  childName?: string; // For display purposes
+  pointsCost?: number;
+  status?: RewardClaimStatus;
+  claimedAt?: string;
+  validatedAt?: string;
   rejectedAt?: string;
-  fulfilledAt?: string;
-  approvedBy?: string;
   notes?: string;
-  expiresAt?: string;
 }
 
 export type RewardClaimStatus = 
-  | 'PENDING'
-  | 'APPROVED'
-  | 'REJECTED'
-  | 'FULFILLED'
-  | 'EXPIRED';
+  | 'pending'
+  | 'approved' 
+  | 'rejected'
+  | 'fulfilled';
+
+export type RewardType = RewardCategory; // Alias for compatibility
 
 export interface CreateRewardRequest {
   name: string;
   description: string;
   pointsCost: number;
   category: RewardCategory;
-  type: RewardType;
-  availability: RewardAvailability;
+  child?: string; // IRI reference for child-specific rewards
   imageUrl?: string;
-  maxStock?: number;
-  restrictions?: RewardRestriction[];
 }
 
 export interface UpdateRewardRequest extends Partial<CreateRewardRequest> {
-  isActive?: boolean;
-  currentStock?: number;
+  available?: boolean;
 }
 
 export interface ClaimRewardRequest {
-  rewardId: string;
-  childId: string;
-  notes?: string;
+  reward: string; // IRI reference to reward
+  child: string; // IRI reference to child
+}
+
+// API Platform Collection Responses
+export interface RewardsCollectionResponse {
+  '@context': string;
+  '@id': string;
+  '@type': 'hydra:Collection';
+  'hydra:member': Reward[];
+  'hydra:totalItems': number;
+  'hydra:view'?: {
+    '@id': string;
+    '@type': 'hydra:PartialCollectionView';
+    'hydra:first'?: string;
+    'hydra:last'?: string;
+    'hydra:next'?: string;
+    'hydra:previous'?: string;
+  };
+}
+
+export interface RewardClaimsCollectionResponse {
+  '@context': string;
+  '@id': string;
+  '@type': 'hydra:Collection';
+  'hydra:member': RewardClaim[];
+  'hydra:totalItems': number;
+  'hydra:view'?: {
+    '@id': string;
+    '@type': 'hydra:PartialCollectionView';
+    'hydra:first'?: string;
+    'hydra:last'?: string;
+    'hydra:next'?: string;
+    'hydra:previous'?: string;
+  };
 }

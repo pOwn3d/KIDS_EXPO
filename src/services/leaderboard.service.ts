@@ -1,23 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiClient from './api.interceptor';
+import { LeaderboardEntry } from '../types/api/gamification';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000';
-
-export interface LeaderboardEntry {
-  id: string | number;
-  rank: number;
-  childId: string | number;
-  childName: string;
-  avatar: string;
-  points: number;
-  totalPoints: number;
-  level: number;
-  badges: number;
-  missionsCompleted: number;
-  streak: number;
-  change?: 'up' | 'down' | 'same';
-  previousRank?: number;
-}
 
 export interface LeaderboardStats {
   totalChildren: number;
@@ -157,31 +142,29 @@ class LeaderboardService {
   /**
    * Mapper les données d'une entrée du classement
    */
-  private mapLeaderboardEntry(data: any, rank: number): LeaderboardEntry {
+  private mapLeaderboardEntry(data: any, rank: number): any {
     // Le backend retourne trend au lieu de change
     const trend = data.trend || 'stable';
-    let change: 'up' | 'down' | 'same' = 'same';
-    
-    if (trend === 'up') change = 'up';
-    else if (trend === 'down') change = 'down';
+    const changeType = trend === 'up' ? 'up' : trend === 'down' ? 'down' : 'same';
 
     return {
-      id: String(data.id || Math.random()),
+      id: data.id || data.childId || rank,
       rank: data.rank || rank,
-      childId: data.id,
-      childName: data.name || 'Enfant',
+      userId: String(data.id || data.childId),
+      userName: data.name || data.childName || 'Enfant',
+      childName: data.name || data.childName || 'Enfant',
       avatar: data.avatar || '👤',
-      points: data.points || 0,
-      totalPoints: data.totalPoints || data.points || 0,
-      level: data.level || 1,
-      badges: data.badgesEarned || 0,
+      score: data.points || data.totalPoints || 0,
+      points: data.points || data.totalPoints || 0,
+      totalPoints: data.points || data.totalPoints || 0,
       missionsCompleted: data.missionsCompleted || 0,
-      streak: data.activityDays || data.activeDays || 0,
-      change: change,
-      previousRank: data.previousRank,
+      streak: data.streak || 0,
+      level: data.level || 1,
+      badges: data.badges || 0,
+      change: changeType,
+      badge: data.currentBadge || data.badge
     };
   }
 }
 
 export const leaderboardService = new LeaderboardService();
-export type { LeaderboardEntry, LeaderboardStats, LeaderboardPeriod, LeaderboardCategory };

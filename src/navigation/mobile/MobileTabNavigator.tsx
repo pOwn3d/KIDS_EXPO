@@ -49,6 +49,18 @@ const MobileTabNavigator: React.FC = () => {
       case 'Sparky':
         iconName = focused ? 'chatbubble-ellipses' : 'chatbubble-ellipses-outline';
         break;
+      case 'Activities':
+        iconName = focused ? 'analytics' : 'analytics-outline';
+        break;
+      case 'Badges':
+        iconName = focused ? 'trophy' : 'trophy-outline';
+        break;
+      case 'Tournaments':
+        iconName = focused ? 'medal' : 'medal-outline';
+        break;
+      case 'Guilds':
+        iconName = focused ? 'shield' : 'shield-outline';
+        break;
       default:
         iconName = focused ? 'ellipse' : 'ellipse-outline';
     }
@@ -70,6 +82,14 @@ const MobileTabNavigator: React.FC = () => {
         return userRole === 'PARENT' ? 'Famille' : 'Profil';
       case 'Sparky':
         return 'Sparky';
+      case 'Activities':
+        return 'Activités';
+      case 'Badges':
+        return 'Badges';
+      case 'Tournaments':
+        return 'Tournois';
+      case 'Guilds':
+        return 'Guildes';
       default:
         return routeName;
     }

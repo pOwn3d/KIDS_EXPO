@@ -1,43 +1,51 @@
 export interface Mission {
-  id: string;
+  '@id'?: string;
+  '@type'?: string;
+  id: number;
   title: string;
   description: string;
+  points: number;
+  status: MissionStatus;
   category: MissionCategory;
   difficulty: MissionDifficulty;
-  pointsReward: number;
-  status: MissionStatus;
-  assignedToId?: string;
-  assignedBy: string;
+  child?: string; // IRI reference to assigned child
+  childName?: string; // For display purposes
   dueDate?: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
   completedAt?: string;
   validatedAt?: string;
+  ageGroup?: AgeGroup; // Added for age-based missions
   recurring?: RecurringConfig;
   requirements?: MissionRequirement[];
   attachments?: string[];
 }
 
+// Categories based on DATABASE_CONTENT.md age groups
 export type MissionCategory = 
-  | 'CHORES'
-  | 'HOMEWORK'
-  | 'HEALTH'
-  | 'SOCIAL'
-  | 'CREATIVE'
-  | 'SPORTS'
-  | 'LEARNING'
-  | 'BEHAVIOR';
+  | 'hygiene'      // Se brosser les dents, douche, etc.
+  | 'domestic'     // Ranger, faire le lit, vaisselle, etc.
+  | 'behavior'     // Dire merci, politesse, etc.
+  | 'autonomy'     // Mettre son pyjama, préparer cartable, etc.  
+  | 'education'    // Devoirs, lire, réviser, etc.
+  | 'responsibility' // Nourrir l'animal, babysitting, etc.
+  | 'health'       // Sport, exercice, etc.
+  | 'solidarity'   // Aider un frère/sœur, etc.
+  | 'garden'       // Tondre la pelouse, jardinage, etc.
+  | 'chores'       // Tâches ménagères générales
+  | 'general';     // Autres
 
-export type MissionDifficulty = 'EASY' | 'MEDIUM' | 'HARD' | 'EXPERT';
+export type MissionDifficulty = 'easy' | 'medium' | 'hard';
 
 export type MissionStatus = 
-  | 'DRAFT'
-  | 'ASSIGNED'
-  | 'IN_PROGRESS'
-  | 'COMPLETED'
-  | 'VALIDATED'
-  | 'REJECTED'
-  | 'EXPIRED';
+  | 'pending'
+  | 'in_progress' 
+  | 'completed'
+  | 'validated'
+  | 'rejected'
+  | 'expired';
+
+import type { AgeGroup } from './children';
 
 export interface RecurringConfig {
   type: 'DAILY' | 'WEEKLY' | 'MONTHLY';
@@ -58,10 +66,10 @@ export interface MissionRequirement {
 export interface CreateMissionRequest {
   title: string;
   description: string;
+  points: number;
   category: MissionCategory;
   difficulty: MissionDifficulty;
-  pointsReward: number;
-  assignedToId?: string;
+  child?: string; // IRI reference to child
   dueDate?: string;
   recurring?: RecurringConfig;
   requirements?: Omit<MissionRequirement, 'id' | 'completed'>[];
@@ -69,6 +77,23 @@ export interface CreateMissionRequest {
 
 export interface UpdateMissionRequest extends Partial<CreateMissionRequest> {
   status?: MissionStatus;
+}
+
+// API Platform Collection Response
+export interface MissionsCollectionResponse {
+  '@context': string;
+  '@id': string;
+  '@type': 'hydra:Collection';
+  'hydra:member': Mission[];
+  'hydra:totalItems': number;
+  'hydra:view'?: {
+    '@id': string;
+    '@type': 'hydra:PartialCollectionView';
+    'hydra:first'?: string;
+    'hydra:last'?: string;
+    'hydra:next'?: string;
+    'hydra:previous'?: string;
+  };
 }
 
 export interface MissionProgress {

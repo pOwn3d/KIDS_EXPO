@@ -275,10 +275,16 @@ export class ApiClient {
         // Handle successful responses
         if (response.ok) {
           const contentType = response.headers.get('content-type');
-          if (contentType?.includes('application/json')) {
+          if (contentType?.includes('application/json') || contentType?.includes('application/ld+json')) {
             return await response.json();
           }
-          return await response.text();
+          // Try to parse as JSON even if content-type is not set correctly
+          const text = await response.text();
+          try {
+            return JSON.parse(text);
+          } catch {
+            return text;
+          }
         }
 
         // Handle authentication errors
@@ -352,6 +358,7 @@ export class ApiClient {
     return this.request({
       url: fullUrl,
       method: 'GET',
+      headers: options.headers,
       signal: options.signal,
       timeout: options.timeout,
     });
@@ -369,6 +376,7 @@ export class ApiClient {
       url,
       method: 'POST',
       body: data ? JSON.stringify(data) : undefined,
+      headers: options.headers,
       signal: options.signal,
       timeout: options.timeout,
     });
@@ -386,6 +394,7 @@ export class ApiClient {
       url,
       method: 'PUT',
       body: data ? JSON.stringify(data) : undefined,
+      headers: options.headers,
       signal: options.signal,
       timeout: options.timeout,
     });
@@ -403,6 +412,7 @@ export class ApiClient {
       url,
       method: 'PATCH',
       body: data ? JSON.stringify(data) : undefined,
+      headers: options.headers,
       signal: options.signal,
       timeout: options.timeout,
     });
@@ -418,6 +428,7 @@ export class ApiClient {
     return this.request({
       url,
       method: 'DELETE',
+      headers: options.headers,
       signal: options.signal,
       timeout: options.timeout,
     });

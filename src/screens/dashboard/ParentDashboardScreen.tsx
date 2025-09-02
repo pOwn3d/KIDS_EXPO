@@ -18,9 +18,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../hooks/useSimpleTheme';
 import { useNavigation } from '@react-navigation/native';
 import { AnimatedCard, Button3D } from '../../components/ui';
-import { dashboardService } from '../../services/dashboard.service';
-import { useSelector } from 'react-redux';
-import { selectIsAuthenticated } from '../../store/store';
+import { useDashboard, useAuth } from '../../hooks';
 
 interface StatCardProps {
   title: string;
@@ -105,68 +103,53 @@ const formatRelativeTime = (timestamp: string): string => {
 const ParentDashboardScreen: React.FC = () => {
   const theme = useTheme();
   const navigation = useNavigation();
-  const isAuthenticated = useSelector(selectIsAuthenticated);
+  const { isAuthenticated } = useAuth();
+  const { 
+    parentData, 
+    activityFeed, 
+    parentQuickActions, 
+    refreshDashboard, 
+    isSyncing,
+    isParent 
+  } = useDashboard();
+  
+  console.log('🎯 ParentDashboard - Data status:', {
+    hasParentData: !!parentData,
+    parentData: parentData,
+    isSyncing: isSyncing,
+    isParent: isParent
+  });
+  
   const [showAddChildModal, setShowAddChildModal] = useState(false);
   const [childName, setChildName] = useState('');
   const [childAge, setChildAge] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   
-  // Données réelles du dashboard
-  const [stats, setStats] = useState({
-    totalChildren: 0,
-    totalPoints: 0,
-    activeMissions: 0,
-    availableRewards: 0,
-    pendingValidations: 0,
-  });
-  const [children, setChildren] = useState<any[]>([]);
-  const [recentActivities, setRecentActivities] = useState<any[]>([]);
-  
-  // Charger les données au montage si authentifié
+  // Rediriger si pas authentifié ou pas parent
   useEffect(() => {
-    if (isAuthenticated) {
-      loadDashboardData();
-    } else {
-      // Si pas authentifié, rediriger vers Auth
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'Auth' as never }],
-      });
+    if (!isAuthenticated || !isParent) {
+      // Ne pas utiliser reset() - laissons RootNavigator gérer l'authentification
+      console.log('User not authenticated or not parent in ParentDashboard');
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, isParent, navigation]);
   
-  const loadDashboardData = async () => {
+  // Charger les données au montage
+  useEffect(() => {
+    if (isAuthenticated && isParent) {
+      refreshDashboard();
+    }
+  }, [isAuthenticated, isParent, refreshDashboard]);
+  
+  const onRefresh = async () => {
+    setRefreshing(true);
     try {
-      setIsLoading(true);
-      const dashboardData = await dashboardService.getParentDashboard();
-      
-      setStats(dashboardData.stats);
-      setChildren(dashboardData.children);
-      setRecentActivities(dashboardData.recentActivities);
-    } catch (error: any) {
-      console.error('Dashboard load error:', error);
-      // Si erreur d'auth, rediriger vers login
-      if (error.message.includes('authentication')) {
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'Auth' as never }],
-        });
-      } else {
-        Alert.alert('Erreur', 'Impossible de charger le tableau de bord');
-      }
+      await refreshDashboard();
     } finally {
-      setIsLoading(false);
       setRefreshing(false);
     }
   };
-  
-  const onRefresh = () => {
-    setRefreshing(true);
-    loadDashboardData();
-  };
 
-  const handleAddChild = async () => {
+  const handleAddChild = () => {
     if (!childName.trim()) {
       Alert.alert('Erreur', 'Veuillez entrer le nom de l\'enfant');
       return;
@@ -177,59 +160,35 @@ const ParentDashboardScreen: React.FC = () => {
       return;
     }
     
-    try {
-      await dashboardService.addChild(childName, childAge);
-      Alert.alert('Succès', `${childName} a été ajouté(e) avec succès !`);
-      setShowAddChildModal(false);
-      setChildName('');
-      setChildAge('');
-      // Recharger les données
-      loadDashboardData();
-    } catch (error: any) {
-      Alert.alert('Erreur', error.message || 'Impossible d\'ajouter l\'enfant');
-    }
+    // Navigation vers l'écran d'ajout d'enfant avec les données
+    navigation.navigate('Children' as never, { 
+      action: 'add',
+      initialData: {
+        firstName: childName,
+        age: parseInt(childAge)
+      }
+    } as never);
+    
+    setShowAddChildModal(false);
+    setChildName('');
+    setChildAge('');
   };
 
-  const quickActions = [
-    {
-      title: 'Créer Mission',
-      icon: 'add-circle' as keyof typeof Ionicons.glyphMap,
-      color: theme.colors.primary,
-      onPress: () => navigation.navigate('Missions' as never),
-    },
-    {
-      title: 'Créer Récompense',
-      icon: 'gift' as keyof typeof Ionicons.glyphMap,
-      color: theme.colors.secondary,
-      onPress: () => navigation.navigate('Rewards' as never),
-    },
-    {
-      title: 'Échanger Points',
-      icon: 'swap-horizontal' as keyof typeof Ionicons.glyphMap,
-      color: theme.colors.kids.green,
-      onPress: () => Alert.alert('Échanger', 'Fonctionnalité à venir'),
-    },
-    {
-      title: 'Top Enfants',
-      icon: 'trophy' as keyof typeof Ionicons.glyphMap,
-      color: theme.colors.kids.yellow,
-      onPress: () => navigation.navigate('Leaderboard' as never),
-    },
-    {
-      title: 'Analyses',
-      icon: 'analytics' as keyof typeof Ionicons.glyphMap,
-      color: theme.colors.kids.blue,
-      onPress: () => Alert.alert('Analyses', 'Fonctionnalité à venir'),
-    },
-    {
-      title: 'Gérer Points',
-      icon: 'settings' as keyof typeof Ionicons.glyphMap,
-      color: theme.colors.kids.purple,
-      onPress: () => Alert.alert('Gérer', 'Fonctionnalité à venir'),
-    },
-  ];
+  // Utiliser les actions du hook avec navigation locale
+  const quickActions = parentQuickActions.map(action => ({
+    ...action,
+    onPress: () => {
+      if (action.route) {
+        navigation.navigate(action.route as never);
+      } else {
+        Alert.alert(action.title, 'Fonctionnalité en développement');
+      }
+    }
+  }));
 
-  if (isLoading) {
+  // Afficher le loading si pas de données ou synchronisation initiale
+  if (!parentData) {
+    console.log('⏳ ParentDashboard - No data, showing loading');
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
         <View style={styles.loadingContainer}>
@@ -241,6 +200,33 @@ const ParentDashboardScreen: React.FC = () => {
       </SafeAreaView>
     );
   }
+  
+  // Destructurer les données du parent pour une meilleure lisibilité
+  const {
+    children = { total: 0, active: 0, list: [] },
+    points = { total: 0, average: 0, distribution: [] },
+    missions = { total: 0, active: 0, recent: [] },
+    rewards = { total: 0, pendingClaims: 0 },
+    stats = { totalActivePunishments: 0, pendingValidations: 0 }
+  } = parentData;
+  
+  const dashboardStats = {
+    totalChildren: children.total,
+    totalPoints: points.total,
+    activeMissions: missions.active || missions.total,
+    availableRewards: rewards.total,
+    pendingValidations: rewards.pendingClaims || stats.pendingValidations,
+  };
+  
+  console.log('📊 Dashboard Stats:', {
+    totalChildren: dashboardStats.totalChildren,
+    totalPoints: dashboardStats.totalPoints,
+    activeMissions: dashboardStats.activeMissions,
+    availableRewards: dashboardStats.availableRewards,
+    childrenData: children,
+    missionsData: missions,
+    rewardsData: rewards
+  });
   
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -270,9 +256,9 @@ const ParentDashboardScreen: React.FC = () => {
             onPress={() => navigation.navigate('Notifications' as never)}
           >
             <Ionicons name="notifications-outline" size={24} color={theme.colors.text} />
-            {stats.pendingValidations > 0 && (
+            {dashboardStats.pendingValidations > 0 && (
               <View style={styles.notificationBadge}>
-                <Text style={styles.notificationBadgeText}>{stats.pendingValidations}</Text>
+                <Text style={styles.notificationBadgeText}>{dashboardStats.pendingValidations}</Text>
               </View>
             )}
           </TouchableOpacity>
@@ -282,31 +268,31 @@ const ParentDashboardScreen: React.FC = () => {
         <View style={styles.statsContainer}>
           <StatCard
             title="Total Enfants"
-            value={stats.totalChildren}
+            value={dashboardStats.totalChildren}
             icon="people"
             gradient={[theme.colors.secondary, theme.colors.primary]}
-            subtitle="Profils actifs"
+            subtitle={`${children.active} actifs`}
           />
           <StatCard
             title="Points Totaux"
-            value={stats.totalPoints}
+            value={dashboardStats.totalPoints}
             icon="star"
             gradient={[theme.colors.kids.yellow, theme.colors.kids.orange]}
-            subtitle="Cette semaine"
+            subtitle={`Moy: ${points.average}`}
           />
           <StatCard
             title="Missions Actives"
-            value={stats.activeMissions}
+            value={dashboardStats.activeMissions}
             icon="rocket"
             gradient={[theme.colors.kids.blue, theme.colors.kids.teal]}
             subtitle="En cours"
           />
           <StatCard
             title="Récompenses"
-            value={stats.availableRewards}
+            value={dashboardStats.availableRewards}
             icon="gift"
             gradient={[theme.colors.kids.pink, theme.colors.kids.purple]}
-            subtitle="Disponibles"
+            subtitle={`${dashboardStats.pendingValidations} en attente`}
           />
         </View>
 
@@ -347,7 +333,7 @@ const ParentDashboardScreen: React.FC = () => {
         </View>
 
         {/* Recent Activity */}
-        {recentActivities.length > 0 && (
+        {activityFeed.length > 0 && (
           <>
             <View style={styles.sectionHeader}>
               <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
@@ -361,28 +347,28 @@ const ParentDashboardScreen: React.FC = () => {
             </View>
 
             <AnimatedCard style={styles.activityCard}>
-              {recentActivities.slice(0, 5).map((activity, index) => (
+              {activityFeed.slice(0, 5).map((activity, index) => (
                 <View key={activity.id || index} style={styles.activityItem}>
                   <View style={[styles.activityIcon, { backgroundColor: (activity.color || theme.colors.primary) + '20' }]}>
                     <Ionicons 
-                      name={activity.icon || 'star'} 
+                      name={activity.icon as keyof typeof Ionicons.glyphMap || 'star'} 
                       size={20} 
                       color={activity.color || theme.colors.primary} 
                     />
                   </View>
                   <View style={styles.activityContent}>
                     <Text style={[styles.activityTitle, { color: theme.colors.text }]}>
-                      {activity.childName} - {activity.description}
+                      {activity.title}
                     </Text>
                     <Text style={[styles.activityTime, { color: theme.colors.textLight }]}>
-                      {formatRelativeTime(activity.timestamp)} 
+                      {formatRelativeTime(activity.timestamp)} • {activity.subtitle}
                       {activity.points && ` • ${activity.points > 0 ? '+' : ''}${activity.points} points`}
                     </Text>
                   </View>
                 </View>
               ))}
               
-              {recentActivities.length === 0 && (
+              {activityFeed.length === 0 && (
                 <Text style={[styles.noActivityText, { color: theme.colors.textLight }]}>
                   Aucune activité récente
                 </Text>

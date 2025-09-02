@@ -7,6 +7,7 @@ import { ActivityIndicator, View } from 'react-native';
 // Navigation components
 import SimpleMobileTabNavigator from './mobile/SimpleMobileTabNavigator';
 import SimpleDesktopNavigator from './desktop/SimpleDesktopNavigator';
+import EnhancedDesktopNavigator from './desktop/EnhancedDesktopNavigator';
 import AuthNavigator from './AuthNavigator';
 
 // Types
@@ -45,14 +46,18 @@ const RootNavigator: React.FC = () => {
 
   // Initialize app - skip session validation for now
   useEffect(() => {
-    // Skip validation for now to avoid 404 errors
-    setIsInitializing(false);
+    // Small delay to ensure everything is mounted
+    const timer = setTimeout(() => {
+      setIsInitializing(false);
+      
+      // Clear any stuck loading state
+      if (authLoading) {
+        console.log('Clearing stuck auth loading state...');
+        dispatch(clearLoading() as any);
+      }
+    }, 100);
     
-    // Clear any stuck loading state on mount
-    if (authLoading) {
-      console.log('Clearing stuck auth loading state...');
-      dispatch(clearLoading() as any);
-    }
+    return () => clearTimeout(timer);
   }, []);
 
   // Debug logging
@@ -103,7 +108,7 @@ const RootNavigator: React.FC = () => {
 
   // Determine which main navigator to use based on platform
   const MainNavigator = platform.shouldUseDesktopNavigation 
-    ? SimpleDesktopNavigator 
+    ? EnhancedDesktopNavigator 
     : SimpleMobileTabNavigator;
 
   return (

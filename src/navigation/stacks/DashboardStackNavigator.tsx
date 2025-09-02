@@ -27,6 +27,12 @@ const DashboardStackNavigator: React.FC = () => {
   const platform = usePlatform();
   const userRole = useSelector(selectUserRole);
 
+  // Vérification de sécurité pour le thème
+  if (!theme || !theme.colors) {
+    console.error('Theme not loaded in DashboardStackNavigator:', theme);
+    return null;
+  }
+
   const commonScreenOptions = {
     headerStyle: {
       backgroundColor: theme.colors.background,
@@ -56,9 +62,10 @@ const DashboardStackNavigator: React.FC = () => {
         component={DashboardHomeScreen}
         options={{
           title: 'Tableau de bord',
-          headerLargeTitle: platform.isDesktop,
-          headerSearchBarOptions: platform.isDesktop ? {
-            placeholder: 'Search...',
+          headerShown: platform.isDesktop ? false : true,
+          headerLargeTitle: platform.isTablet,
+          headerSearchBarOptions: platform.isTablet ? {
+            placeholder: 'Rechercher...',
             hideWhenScrolling: false,
           } : undefined,
         }}

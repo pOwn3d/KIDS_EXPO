@@ -5,6 +5,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import WelcomeScreen from '../screens/auth/WelcomeScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
+import InvitationScreen from '../screens/auth/InvitationScreen';
 import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
 import PinSetupScreen from '../screens/auth/PinSetupScreen';
 import ChildSelectionScreen from '../screens/auth/ChildSelectionScreen';
@@ -71,8 +72,18 @@ const AuthNavigator: React.FC = () => {
       <Stack.Screen
         name="Register"
         component={RegisterScreen}
+        options={({ route }) => ({
+          title: route.params?.invitationToken ? 'Rejoindre la Famille' : 'Create Account',
+          headerShown: !platform.isMobile,
+        })}
+      />
+
+      {/* Invitation Screen */}
+      <Stack.Screen
+        name="Invitation"
+        component={InvitationScreen}
         options={{
-          title: 'Create Account',
+          title: 'Invitation',
           headerShown: !platform.isMobile,
         }}
       />

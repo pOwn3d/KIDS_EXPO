@@ -9,12 +9,14 @@ import {
   Alert,
   RefreshControl,
   Platform,
+  TextInput,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../hooks/useSimpleTheme';
 import { useNavigation } from '@react-navigation/native';
 import { missionsService } from '../../services/missions.service';
 import type { Mission } from '../../services/missions.service';
+import WebScreenWrapper from '../../components/layout/WebScreenWrapper';
 
 const MissionsHomeScreen: React.FC = () => {
   const theme = useTheme();
@@ -23,6 +25,7 @@ const MissionsHomeScreen: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<'toutes' | 'actives' | 'terminees'>('toutes');
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     loadMissions();
@@ -86,14 +89,29 @@ const MissionsHomeScreen: React.FC = () => {
   };
 
   const getFilteredMissions = () => {
+    let filtered = missions;
+    
+    // Filtre par statut
     switch (activeTab) {
       case 'actives':
-        return missions.filter(m => m.status === 'active');
+        filtered = filtered.filter(m => m.status === 'active');
+        break;
       case 'terminees':
-        return missions.filter(m => m.status === 'completed');
-      default:
-        return missions;
+        filtered = filtered.filter(m => m.status === 'completed');
+        break;
     }
+    
+    // Filtre par recherche
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(m => 
+        m.title.toLowerCase().includes(query) ||
+        m.description.toLowerCase().includes(query) ||
+        m.type?.toLowerCase().includes(query)
+      );
+    }
+    
+    return filtered;
   };
 
   const getMissionIcon = (category: string) => {
@@ -237,24 +255,32 @@ const MissionsHomeScreen: React.FC = () => {
   const completedMissionsCount = missions.filter(m => m.status === 'completed').length;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      {/* Header */}
-      <View style={[styles.header, { backgroundColor: theme.colors.surface }]}>
-        <View style={styles.headerContent}>
-          <View>
-            <Text style={[styles.headerTitle, { color: theme.colors.text }]}>
-              Missions
-            </Text>
-            <Text style={[styles.headerSubtitle, { color: theme.colors.textSecondary }]}>
-              Gérez les missions de vos enfants
-            </Text>
-          </View>
-          <TouchableOpacity
-            style={[styles.createButton, { backgroundColor: theme.colors.primary }]}
-            onPress={handleCreateMission}
-          >
-            <Ionicons name="add" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
+    <WebScreenWrapper
+      title="Missions"
+      subtitle="Gérez et suivez les missions de vos enfants"
+      icon="list"
+      headerProps={{ notificationCount: 2 }}
+    >
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+
+      {/* Search Bar */}
+      <View style={styles.searchContainer}>
+        <View style={[styles.searchBar, { backgroundColor: theme.colors.surface }]}>
+          <Ionicons name="search" size={20} color={theme.colors.textSecondary} />
+          <TextInput
+            style={[styles.searchInput, { color: theme.colors.text }]}
+            placeholder="Rechercher une mission..."
+            placeholderTextColor={theme.colors.textSecondary}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery('')}>
+              <Ionicons name="close-circle" size={20} color={theme.colors.textSecondary} />
+            </TouchableOpacity>
+          )}
         </View>
       </View>
 
@@ -322,7 +348,8 @@ const MissionsHomeScreen: React.FC = () => {
           </View>
         )}
       </ScrollView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </WebScreenWrapper>
   );
 };
 
@@ -346,6 +373,23 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+  },
+  searchContainer: {
+    paddingHorizontal: Platform.OS === 'web' ? 40 : 20,
+    paddingVertical: 10,
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    borderRadius: 10,
+    gap: 10,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    paddingVertical: Platform.OS === 'ios' ? 5 : 0,
   },
   headerContent: {
     flexDirection: 'row',

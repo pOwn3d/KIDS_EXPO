@@ -13,6 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../hooks/useSimpleTheme';
 import { useNavigation } from '@react-navigation/native';
+import WebScreenWrapper from '../../components/layout/WebScreenWrapper';
 import { 
   leaderboardService, 
   type LeaderboardEntry, 
@@ -103,11 +104,11 @@ const LeaderboardScreen: React.FC = () => {
 
   const getCategoryValue = (entry: LeaderboardEntry) => {
     switch (selectedCategory) {
-      case 'missions': return `${entry.missionsCompleted} missions`;
-      case 'streak': return `${entry.streak} jours`;
-      case 'level': return `Niveau ${entry.level}`;
+      case 'missions': return `${entry.missionsCompleted || 0} missions`;
+      case 'streak': return `${entry.streak || 0} jours`;
+      case 'level': return `Niveau ${entry.level || 1}`;
       case 'points':
-      default: return `${entry.points} pts`;
+      default: return `${entry.points || 0} pts`;
     }
   };
 
@@ -374,16 +375,12 @@ const LeaderboardScreen: React.FC = () => {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      {/* Header */}
-      <View style={[styles.header, { backgroundColor: theme.colors.surface }]}>
-        <Text style={[styles.headerTitle, { color: theme.colors.text }]}>
-          Classement
-        </Text>
-        <Text style={[styles.headerSubtitle, { color: theme.colors.textSecondary }]}>
-          Comparez les performances de vos enfants
-        </Text>
-      </View>
+    <WebScreenWrapper
+      title="Classement"
+      subtitle="Comparez les performances de vos enfants"
+      icon="trophy"
+    >
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
 
       {/* Selectors */}
       <PeriodSelector />
@@ -427,7 +424,8 @@ const LeaderboardScreen: React.FC = () => {
 
         <View style={styles.bottomPadding} />
       </ScrollView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </WebScreenWrapper>
   );
 };
 

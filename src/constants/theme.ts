@@ -20,24 +20,34 @@ const baseSpacing = {
 
 const baseTypography = {
   fontFamily: {
-    regular: 'System',
-    medium: 'System',
-    bold: 'System',
-    light: 'System',
+    regular: 'Inter-Regular',
+    medium: 'Inter-Medium', 
+    bold: 'Inter-Bold',
+    light: 'Inter-Light',
+    semiBold: 'Inter-SemiBold',
+    extraBold: 'Inter-ExtraBold',
   },
   fontSize: {
-    xs: 12,
-    sm: 14,
-    md: 16,
-    lg: 18,
+    xs: 11,
+    sm: 13,
+    md: 15,
+    lg: 17,
     xl: 20,
     xxl: 24,
     xxxl: 32,
+    hero: 40,
   },
   lineHeight: {
-    tight: 1.2,
+    tight: 1.25,
     normal: 1.5,
-    relaxed: 1.8,
+    relaxed: 1.75,
+    loose: 2,
+  },
+  letterSpacing: {
+    tight: -0.5,
+    normal: 0,
+    wide: 0.5,
+    wider: 1,
   },
 };
 

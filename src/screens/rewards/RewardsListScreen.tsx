@@ -17,6 +17,7 @@ import { useTheme } from '../../hooks/useSimpleTheme';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { rewardsService, Reward, RewardClaim } from '../../services/rewards.service';
 import { childrenService } from '../../services/children.service';
+import WebScreenWrapper from '../../components/layout/WebScreenWrapper';
 
 interface RewardCardProps {
   reward: Reward;
@@ -343,28 +344,13 @@ const RewardsListScreen: React.FC = () => {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      {/* Header - Masqué sur Web car déjà fourni par la navigation */}
-      {Platform.OS !== 'web' && (
-        <View style={styles.header}>
-          <View>
-            <Text style={[styles.title, { color: theme.colors.text }]}>
-              Récompenses
-            </Text>
-            {pendingCount > 0 && (
-              <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
-                {pendingCount} demande{pendingCount > 1 ? 's' : ''} en attente de validation
-              </Text>
-            )}
-          </View>
-          <TouchableOpacity
-            style={[styles.addButton, { backgroundColor: theme.colors.primary }]}
-            onPress={handleCreateReward}
-          >
-            <Ionicons name="add" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-        </View>
-      )}
+    <WebScreenWrapper
+      title="Récompenses"
+      subtitle="Gérez les récompenses et validez les demandes"
+      icon="gift"
+      headerProps={{ notificationCount: pendingCount }}
+    >
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
 
       {/* Search Bar */}
       <View style={styles.searchContainer}>
@@ -482,7 +468,8 @@ const RewardsListScreen: React.FC = () => {
           ))
         )}
       </ScrollView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </WebScreenWrapper>
   );
 };
 

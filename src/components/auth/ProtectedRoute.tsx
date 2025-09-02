@@ -16,11 +16,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   
   useEffect(() => {
     if (!isAuthenticated) {
-      // Rediriger vers la page de connexion
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'Auth' as never }],
-      });
+      // Ne pas utiliser reset() car la route Auth est gérée conditionnellement dans RootNavigator
+      // Le RootNavigator va automatiquement afficher AuthNavigator quand isAuthenticated est false
+      console.log('User not authenticated in ProtectedRoute');
     }
   }, [isAuthenticated, navigation]);
 

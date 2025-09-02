@@ -1,33 +1,18 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import apiClient from './api.interceptor';
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000';
-
-interface Reward {
-  id: string;
-  name: string;
-  description: string;
-  pointsCost: number;
-  status: string;
-  category: string;
-  imageUrl?: string;
-  icon?: string;
-  availability: 'available' | 'claimed' | 'pending' | 'out_of_stock';
-  expiryDate?: string;
-  createdAt?: string;
-}
-
-interface RewardClaim {
-  id: string;
-  rewardId: string;
-  childId: string;
-  childName: string;
-  rewardName: string;
-  pointsCost: number;
-  status: 'pending' | 'approved' | 'rejected';
-  claimedAt: string;
-  validatedAt?: string;
-}
+import { apiClient } from './api/client';
+import { API_ENDPOINTS, API_URL } from '../config/api.config';
+import { 
+  Reward, 
+  RewardClaim,
+  CreateRewardRequest, 
+  UpdateRewardRequest,
+  ClaimRewardRequest,
+  RewardsCollectionResponse,
+  RewardClaimsCollectionResponse,
+  RewardCategory,
+  RewardClaimStatus
+} from '../types/api/rewards';
+import { AgeGroup } from '../types/api/children';
 
 class RewardsService {
   /**
@@ -45,78 +30,84 @@ class RewardsService {
   /**
    * Récupérer toutes les récompenses
    */
-  async getAllRewards(): Promise<Reward[]> {
+  async getAllRewards(filters?: {
+    child?: number;
+    available?: boolean;
+    category?: RewardCategory;
+  }): Promise<Reward[]> {
     try {
       const token = await this.getToken();
       if (!token) {
         throw new Error('No authentication token');
       }
 
-      const response = await apiClient.get(
-        `${API_URL}/api/rewards`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      console.log('Rewards API response:', response.data);
+      // Construire l'URL avec les filtres
+      let url = API_ENDPOINTS.REWARDS.LIST;
+      const params = new URLSearchParams();
       
-      // Gérer différentes structures de réponse possibles
-      let rewardsArray = [];
-      
-      if (response.data.success && response.data.data?.rewards) {
-        rewardsArray = response.data.data.rewards;
-      } else if (Array.isArray(response.data)) {
-        // Filtrer les éléments vides et les tableaux vides
-        rewardsArray = response.data.filter(reward => 
-          reward && 
-          typeof reward === 'object' && 
-          !Array.isArray(reward) &&
-          Object.keys(reward).length > 0
-        );
-      } else if (response.data['hydra:member']) {
-        rewardsArray = response.data['hydra:member'];
-      } else if (response.data.data && Array.isArray(response.data.data)) {
-        rewardsArray = response.data.data;
-      } else if (response.data.rewards) {
-        rewardsArray = response.data.rewards;
+      if (filters?.child) {
+        params.append('child', filters.child.toString());
+      }
+      if (filters?.available !== undefined) {
+        params.append('available', filters.available.toString());
+      }
+      if (filters?.category) {
+        params.append('category', filters.category);
       }
       
-      console.log('Rewards extracted:', rewardsArray);
-      
-      // Transformer les données depuis le format API
-      return rewardsArray.map((reward: any) => {
-        console.log('Reward data:', reward);
-        
-        const rewardId = reward.id;
-        const rewardName = reward.name || reward.title || `Récompense #${rewardId || 'Unknown'}`;
-        
-        // Déterminer le statut de disponibilité
-        let availability: 'available' | 'claimed' | 'pending' | 'out_of_stock' = 'available';
-        if (reward.is_claimed === true) {
-          availability = 'claimed';
-        } else if (reward.is_available === false) {
-          availability = 'out_of_stock';
-        } else if (reward.status === 'pending') {
-          availability = 'pending';
-        }
-        
-        return {
-          id: rewardId ? String(rewardId) : Math.random().toString(),
-          name: rewardName,
-          description: reward.description || '',
-          pointsCost: reward.pointsCost || reward.cost || reward.points || 0,
-          status: reward.status || 'active',
-          category: reward.category || 'general',
-          imageUrl: reward.imageUrl || reward.image,
-          icon: reward.icon,
-          availability: availability,
-          expiryDate: reward.expiry_date || reward.expiryDate,
-          createdAt: reward.created_at || reward.createdAt,
-        };
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+
+      const response = await apiClient.get<RewardsCollectionResponse>(url, {}, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/ld+json',
+        },
       });
+
+      // Handle both direct array and hydra format
+      let rewardsArray: any[] = [];
+      
+      if (Array.isArray(response)) {
+        // Direct array format (current API)
+        rewardsArray = response;
+        console.log('✅ Rewards API response (direct array):', rewardsArray.length, 'rewards');
+      } else if (response['hydra:member']) {
+        // Hydra format
+        rewardsArray = response['hydra:member'];
+        console.log('✅ Rewards API response (hydra):', rewardsArray.length, 'rewards');
+      } else {
+        console.log('⚠️ Unexpected rewards response format:', response);
+        // Si la réponse a une structure d'objet avec des données, essayer de les récupérer
+        if (response && typeof response === 'object') {
+          if (response.member) {
+            rewardsArray = response.member;
+            console.log('✅ Rewards API response (totalItems/member):', rewardsArray.length, 'rewards');
+          }
+        }
+      }
+      
+      return rewardsArray.map((reward: any) => ({
+        ...reward,
+        // Map API Platform fields to our model
+        id: reward.id,
+        name: reward.name || 'Récompense',
+        description: reward.description || '',
+        pointsCost: reward.pointsCost || 0,
+        category: reward.type || reward.category || 'general',
+        type: reward.type || reward.category || 'general',
+        available: reward.isActive !== false && reward.available !== false,
+        isActive: reward.isActive !== false,
+        icon: reward.icon || '🎁',
+        maxClaimsPerWeek: reward.maxClaimsPerWeek || 5,
+        child: reward.child,
+        childName: reward.childName,
+        imageUrl: reward.imageUrl,
+        ageGroup: reward.ageGroup,
+        createdAt: reward.createdAt,
+        updatedAt: reward.updatedAt,
+      }));
     } catch (error: any) {
       console.error('Failed to fetch rewards:', error);
       throw new Error(error.response?.data?.message || error.message || 'Failed to fetch rewards');
@@ -127,79 +118,40 @@ class RewardsService {
    * Récupérer les récompenses disponibles
    */
   async getAvailableRewards(): Promise<Reward[]> {
-    try {
-      const token = await this.getToken();
-      if (!token) {
-        throw new Error('No authentication token');
-      }
-
-      const response = await apiClient.get(
-        `${API_URL}/api/rewards/available`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      const rewards = response.data.data || response.data || [];
-      
-      return rewards.map((reward: any) => ({
-        id: reward.id ? String(reward.id) : Math.random().toString(),
-        name: reward.name || reward.title,
-        description: reward.description || '',
-        pointsCost: reward.pointsCost || reward.cost || reward.points || 0,
-        status: reward.status || 'active',
-        category: reward.category || 'general',
-        imageUrl: reward.imageUrl || reward.image,
-        icon: reward.icon,
-        availability: 'available' as const,
-        expiryDate: reward.expiry_date || reward.expiryDate,
-        createdAt: reward.created_at || reward.createdAt,
-      }));
-    } catch (error: any) {
-      console.error('Failed to fetch available rewards:', error);
-      throw new Error(error.response?.data?.message || error.message || 'Failed to fetch available rewards');
-    }
+    return this.getAllRewards({ available: true });
   }
 
   /**
    * Récupérer les récompenses d'un enfant
    */
-  async getChildRewards(childId: string): Promise<Reward[]> {
+  async getChildRewards(childId: number): Promise<Reward[]> {
+    return this.getAllRewards({ child: childId });
+  }
+
+  /**
+   * Récupérer une récompense par ID
+   */
+  async getRewardById(rewardId: number): Promise<Reward | null> {
     try {
       const token = await this.getToken();
       if (!token) {
         throw new Error('No authentication token');
       }
 
-      const response = await apiClient.get(
-        `${API_URL}/api/rewards/child/${childId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await apiClient.get<Reward>(API_ENDPOINTS.REWARDS.GET(rewardId), {}, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/ld+json',
+        },
+      });
 
-      const rewards = response.data.data || response.data || [];
-      
-      return rewards.map((reward: any) => ({
-        id: reward.id ? String(reward.id) : Math.random().toString(),
-        name: reward.name || reward.title,
-        description: reward.description || '',
-        pointsCost: reward.pointsCost || reward.cost || reward.points || 0,
-        status: reward.status || 'active',
-        category: reward.category || 'general',
-        imageUrl: reward.imageUrl || reward.image,
-        icon: reward.icon,
-        availability: reward.availability || 'available',
-        expiryDate: reward.expiry_date || reward.expiryDate,
-        createdAt: reward.created_at || reward.createdAt,
-      }));
+      return response;
     } catch (error: any) {
-      console.error('Failed to fetch child rewards:', error);
-      throw new Error(error.response?.data?.message || error.message || 'Failed to fetch child rewards');
+      console.error('Failed to fetch reward by ID:', error);
+      if (error.response?.status === 404) {
+        return null;
+      }
+      throw new Error(error.response?.data?.message || error.message || 'Failed to fetch reward');
     }
   }
 
@@ -213,38 +165,54 @@ class RewardsService {
         throw new Error('No authentication token');
       }
 
-      const response = await apiClient.get(
-        `${API_URL}/api/rewards/claims`,
+      const response = await apiClient.get<RewardClaimsCollectionResponse>(
+        API_ENDPOINTS.REWARDS.CLAIMS.LIST,
+        {},
         {
           headers: {
             Authorization: `Bearer ${token}`,
+            Accept: 'application/ld+json',
           },
         }
       );
 
-      const claims = response.data.data || response.data || [];
+      console.log('Reward claims API response:', {
+        totalItems: response['hydra:totalItems'],
+        memberCount: response['hydra:member']?.length,
+        context: response['@context']
+      });
+
+      // API Platform retourne toujours 'hydra:member'
+      const claimsArray = response['hydra:member'] || [];
       
-      return claims.map((claim: any) => ({
-        id: claim.id ? String(claim.id) : Math.random().toString(),
-        rewardId: claim.reward_id || claim.rewardId,
-        childId: claim.child_id || claim.childId,
-        childName: claim.child_name || claim.childName || 'Enfant',
-        rewardName: claim.reward_name || claim.rewardName || 'Récompense',
-        pointsCost: claim.points_cost || claim.pointsCost || 0,
+      return claimsArray.map((claim: RewardClaim) => ({
+        ...claim,
+        // Assurer la cohérence des propriétés
+        id: claim.id,
+        reward: claim.reward,
+        child: claim.child,
+        rewardName: claim.rewardName,
+        childName: claim.childName,
+        pointsCost: claim.pointsCost || 0,
         status: claim.status || 'pending',
-        claimedAt: claim.claimed_at || claim.claimedAt,
-        validatedAt: claim.validated_at || claim.validatedAt,
+        claimedAt: claim.claimedAt,
+        validatedAt: claim.validatedAt,
+        rejectedAt: claim.rejectedAt,
+        notes: claim.notes,
       }));
     } catch (error: any) {
       console.error('Failed to fetch reward claims:', error);
-      throw new Error(error.response?.data?.message || error.message || 'Failed to fetch reward claims');
+      
+      // En cas d'échec complet, retourner un tableau vide au lieu de faire échouer l'app
+      console.log('Returning empty claims array as fallback');
+      return [];
     }
   }
 
   /**
    * Réclamer une récompense (enfant)
    */
-  async claimReward(rewardId: string, childId: string): Promise<boolean> {
+  async claimReward(rewardId: number, childId: number): Promise<RewardClaim> {
     try {
       const token = await this.getToken();
       if (!token) {
@@ -254,36 +222,37 @@ class RewardsService {
       console.log('🎁 Claiming reward:', {
         rewardId,
         childId,
-        url: `${API_URL}/api/rewards/${rewardId}/claim`,
-        payload: { childId }
+        endpoint: API_ENDPOINTS.REWARDS.CLAIMS.CREATE
       });
 
-      const response = await apiClient.post(
-        `${API_URL}/api/rewards/${rewardId}/claim`,
-        { childId },
+      const claimData: ClaimRewardRequest = {
+        reward: `/api/rewards/${rewardId}`, // IRI reference
+        child: `/api/children/${childId}`, // IRI reference
+      };
+
+      const response = await apiClient.post<RewardClaim>(
+        API_ENDPOINTS.REWARDS.CLAIMS.CREATE,
+        claimData,
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/ld+json',
           },
         }
       );
 
       console.log('🎁 Claim response:', {
-        status: response.status,
-        data: response.data,
-        success: response.data.success
+        id: response.id,
+        status: response.status
       });
 
-      return response.data.success || response.status === 200 || response.status === 201;
+      return response;
     } catch (error: any) {
       console.error('🚨 Claim reward error details:', {
         status: error.response?.status,
         statusText: error.response?.statusText,
         data: error.response?.data,
-        url: error.config?.url,
-        method: error.config?.method,
-        payload: error.config?.data
+        endpoint: API_ENDPOINTS.REWARDS.CLAIMS.CREATE
       });
       
       throw new Error(error.response?.data?.message || error.response?.data?.detail || error.message || 'Failed to claim reward');
@@ -293,24 +262,25 @@ class RewardsService {
   /**
    * Valider une demande de récompense (parent)
    */
-  async validateRewardClaim(claimId: string): Promise<boolean> {
+  async validateRewardClaim(claimId: number): Promise<RewardClaim> {
     try {
       const token = await this.getToken();
       if (!token) {
         throw new Error('No authentication token');
       }
 
-      const response = await apiClient.post(
-        `${API_URL}/api/rewards/claims/${claimId}/validate`,
-        {},
+      const response = await apiClient.patch<RewardClaim>(
+        API_ENDPOINTS.REWARDS.CLAIMS.UPDATE(claimId),
+        { status: 'approved' },
         {
           headers: {
             Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/merge-patch+json',
           },
         }
       );
 
-      return response.data.success || response.status === 200;
+      return response;
     } catch (error: any) {
       console.error('Failed to validate reward claim:', error);
       throw new Error(error.response?.data?.message || error.message || 'Failed to validate reward claim');
@@ -320,25 +290,28 @@ class RewardsService {
   /**
    * Rejeter une demande de récompense (parent)
    */
-  async rejectRewardClaim(claimId: string, reason?: string): Promise<boolean> {
+  async rejectRewardClaim(claimId: number, reason?: string): Promise<RewardClaim> {
     try {
       const token = await this.getToken();
       if (!token) {
         throw new Error('No authentication token');
       }
 
-      const response = await apiClient.post(
-        `${API_URL}/api/rewards/claims/${claimId}/reject`,
-        { reason },
+      const response = await apiClient.patch<RewardClaim>(
+        API_ENDPOINTS.REWARDS.CLAIMS.UPDATE(claimId),
+        { 
+          status: 'rejected',
+          notes: reason
+        },
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/merge-patch+json',
           },
         }
       );
 
-      return response.data.success || response.status === 200;
+      return response;
     } catch (error: any) {
       console.error('Failed to reject reward claim:', error);
       throw new Error(error.response?.data?.message || error.message || 'Failed to reject reward claim');
@@ -348,41 +321,25 @@ class RewardsService {
   /**
    * Créer une nouvelle récompense
    */
-  async createReward(rewardData: {
-    name: string;
-    description: string;
-    pointsCost: number;
-    category: string;
-    imageUrl?: string;
-    icon?: string;
-    expiryDate?: string;
-  }): Promise<Reward> {
+  async createReward(rewardData: CreateRewardRequest): Promise<Reward> {
     try {
       const token = await this.getToken();
       if (!token) {
         throw new Error('No authentication token');
       }
 
-      const response = await apiClient.post(
-        `${API_URL}/api/rewards`,
-        {
-          name: rewardData.name,
-          description: rewardData.description,
-          pointsCost: rewardData.pointsCost,
-          category: rewardData.category,
-          imageUrl: rewardData.imageUrl,
-          icon: rewardData.icon || '🎁',
-          expiryDate: rewardData.expiryDate,
-        },
+      const response = await apiClient.post<Reward>(
+        API_ENDPOINTS.REWARDS.CREATE,
+        rewardData,
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/ld+json',
           },
         }
       );
 
-      return response.data.data || response.data;
+      return response;
     } catch (error: any) {
       console.error('Failed to create reward:', error);
       throw new Error(error.response?.data?.message || error.message || 'Failed to create reward');
@@ -392,23 +349,20 @@ class RewardsService {
   /**
    * Supprimer une récompense
    */
-  async deleteReward(rewardId: string): Promise<boolean> {
+  async deleteReward(rewardId: number): Promise<boolean> {
     try {
       const token = await this.getToken();
       if (!token) {
         throw new Error('No authentication token');
       }
 
-      const response = await apiClient.delete(
-        `${API_URL}/api/rewards/${rewardId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      await apiClient.delete(API_ENDPOINTS.REWARDS.DELETE(rewardId), {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-      return response.status === 204 || response.status === 200;
+      return true;
     } catch (error: any) {
       console.error('Failed to delete reward:', error);
       throw new Error(error.response?.data?.message || error.message || 'Failed to delete reward');
@@ -418,28 +372,90 @@ class RewardsService {
   /**
    * Mettre à jour une récompense
    */
-  async updateReward(rewardId: string, updates: Partial<Reward>): Promise<Reward> {
+  async updateReward(rewardId: number, updates: UpdateRewardRequest): Promise<Reward> {
     try {
       const token = await this.getToken();
       if (!token) {
         throw new Error('No authentication token');
       }
 
-      const response = await apiClient.put(
-        `${API_URL}/api/rewards/${rewardId}`,
+      const response = await apiClient.put<Reward>(
+        API_ENDPOINTS.REWARDS.UPDATE(rewardId),
         updates,
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/ld+json',
           },
         }
       );
 
-      return response.data.data || response.data;
+      return response;
     } catch (error: any) {
       console.error('Failed to update reward:', error);
       throw new Error(error.response?.data?.message || error.message || 'Failed to update reward');
+    }
+  }
+
+  /**
+   * Récupérer les recommandations de récompenses par âge - Nouvelle fonctionnalité
+   */
+  async getRewardRecommendationsByAge(ageGroup: AgeGroup): Promise<Reward[]> {
+    try {
+      const token = await this.getToken();
+      if (!token) {
+        throw new Error('No authentication token');
+      }
+
+      // Mapping des catégories par âge basé sur DATABASE_CONTENT.md
+      const categoryMap: Record<AgeGroup, RewardCategory[]> = {
+        '3-5': ['entertainment', 'screen_time', 'toy', 'outing', 'food'],
+        '6-8': ['screen_time', 'outing', 'money', 'food', 'education', 'social'],
+        '9-12': ['screen_time', 'money', 'social', 'subscription', 'gaming', 'privilege'],
+        '13-17': ['outing', 'money', 'privilege', 'social', 'subscription', 'shopping']
+      };
+
+      const categories = categoryMap[ageGroup] || ['general'];
+      const allRewards: Reward[] = [];
+
+      // Récupérer les récompenses pour chaque catégorie
+      for (const category of categories) {
+        try {
+          const rewards = await this.getAllRewards({ category, available: true });
+          allRewards.push(...rewards);
+        } catch (error) {
+          console.warn(`Failed to fetch rewards for category ${category}:`, error);
+        }
+      }
+
+      return allRewards;
+    } catch (error: any) {
+      console.error('Failed to fetch reward recommendations:', error);
+      throw new Error(error.response?.data?.message || error.message || 'Failed to fetch reward recommendations');
+    }
+  }
+
+  /**
+   * Récupérer les recommandations de récompenses pour un enfant spécifique
+   */
+  async getRewardRecommendationsForChild(childId: number, ageGroup: AgeGroup): Promise<Reward[]> {
+    try {
+      // Combiner les recommandations par âge avec les récompenses spécifiques à l'enfant
+      const [recommendations, childRewards] = await Promise.all([
+        this.getRewardRecommendationsByAge(ageGroup),
+        this.getChildRewards(childId)
+      ]);
+
+      // Fusionner et éliminer les doublons
+      const allRewards = [...recommendations, ...childRewards];
+      const uniqueRewards = allRewards.filter((reward, index, self) => 
+        index === self.findIndex(r => r.id === reward.id)
+      );
+
+      return uniqueRewards.filter(reward => reward.available);
+    } catch (error: any) {
+      console.error('Failed to fetch child reward recommendations:', error);
+      throw new Error(error.response?.data?.message || error.message || 'Failed to fetch child reward recommendations');
     }
   }
 }

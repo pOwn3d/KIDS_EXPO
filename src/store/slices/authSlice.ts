@@ -15,6 +15,10 @@ const initialState: AuthState = {
   lastActivity: Date.now(),
   pinProtected: false,
   pinValidUntil: null,
+  // Nouveaux champs pour les invitations
+  invitationToken: null,
+  invitationValid: false,
+  invitationData: null,
 };
 
 // Async thunks
@@ -184,6 +188,49 @@ export const changePasswordAsync = createAsyncThunk<
   }
 );
 
+// ===== INVITATION SYSTEM =====
+
+// Valider un token d'invitation
+export const validateInvitationTokenAsync = createAsyncThunk<
+  { valid: boolean; familyName?: string; parentName?: string },
+  string,
+  AsyncThunkConfig
+>(
+  'auth/validateInvitationToken',
+  async (token, { rejectWithValue }) => {
+    try {
+      const response = await authService.validateInvitationToken(token);
+      return response;
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Invalid invitation token');
+    }
+  }
+);
+
+// S'inscrire avec un token d'invitation
+export const registerWithInvitationAsync = createAsyncThunk<
+  LoginResponse,
+  {
+    invitationToken: string;
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+    confirmPassword: string;
+  },
+  AsyncThunkConfig
+>(
+  'auth/registerWithInvitation',
+  async (userData, { rejectWithValue }) => {
+    try {
+      const response = await authService.registerWithInvitation(userData);
+      return response;
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Registration with invitation failed');
+    }
+  }
+);
+
 // Auth slice
 const authSlice = createSlice({
   name: 'auth',
@@ -239,6 +286,28 @@ const authSlice = createSlice({
     // Clear loading state
     clearLoading: (state) => {
       state.isLoading = false;
+    },
+    
+    // ===== INVITATION ACTIONS =====
+    setInvitationToken: (state, action: PayloadAction<string | null>) => {
+      state.invitationToken = action.payload;
+      if (!action.payload) {
+        state.invitationValid = false;
+        state.invitationData = null;
+      }
+    },
+    
+    clearInvitation: (state) => {
+      state.invitationToken = null;
+      state.invitationValid = false;
+      state.invitationData = null;
+    },
+    
+    // Update user profile
+    updateUser: (state, action: PayloadAction<User>) => {
+      if (state.user) {
+        state.user = { ...state.user, ...action.payload };
+      }
     },
   },
   extraReducers: (builder) => {
@@ -432,6 +501,58 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload as string;
       });
+
+    // ===== INVITATION SYSTEM =====
+    
+    // Validate Invitation Token
+    builder
+      .addCase(validateInvitationTokenAsync.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(validateInvitationTokenAsync.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.invitationValid = action.payload.valid;
+        if (action.payload.valid) {
+          state.invitationData = {
+            familyName: action.payload.familyName,
+            parentName: action.payload.parentName,
+          };
+        } else {
+          state.invitationData = null;
+        }
+        state.error = null;
+      })
+      .addCase(validateInvitationTokenAsync.rejected, (state, action) => {
+        state.isLoading = false;
+        state.invitationValid = false;
+        state.invitationData = null;
+        state.error = action.payload as string;
+      });
+
+    // Register with Invitation
+    builder
+      .addCase(registerWithInvitationAsync.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(registerWithInvitationAsync.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.isAuthenticated = true;
+        state.user = action.payload.user;
+        state.token = action.payload.token;
+        state.refreshToken = action.payload.refreshToken;
+        // Clear invitation data after successful registration
+        state.invitationToken = null;
+        state.invitationValid = false;
+        state.invitationData = null;
+        state.error = null;
+        state.lastActivity = Date.now();
+      })
+      .addCase(registerWithInvitationAsync.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      });
   },
 });
 
@@ -444,6 +565,9 @@ export const {
   restoreSession,
   logout,
   clearLoading,
+  setInvitationToken,
+  clearInvitation,
+  updateUser,
 } = authSlice.actions;
 
 // Re-export async thunks
@@ -456,7 +580,9 @@ export {
   validateSessionAsync as validateSession,
   verifyParentPinAsync as verifyParentPin,
   forgotPasswordAsync as forgotPassword,
-  changePasswordAsync as changePassword
+  changePasswordAsync as changePassword,
+  validateInvitationTokenAsync as validateInvitationToken,
+  registerWithInvitationAsync as registerWithInvitation
 };
 
 // Alias for backward compatibility

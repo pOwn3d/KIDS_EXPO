@@ -33,13 +33,22 @@ export const useTheme = () => {
     tabBarBackground: '#FFFFFF',
     tabBarActive: '#A855F7', // Purple from React navbar
     tabBarInactive: '#9CA3AF',
+    tabBarActiveText: '#A855F7',
+    tabBarInactiveText: '#9CA3AF',
     
     // Sidebar colors for desktop - from React project
     sidebarBackground: '#FFFFFF',
+    sidebarActiveBackground: '#F3E8FF', // purple.50
     sidebarText: '#374151',  // gray.700
     sidebarTextSecondary: '#6B7280', // gray.500
     sidebarActive: 'linear-gradient(135deg, #A855F7 0%, #3B82F6 100%)', // purple to blue gradient
     sidebarHover: '#F9FAFB', // gray.50
+    
+    // Additional background shades
+    backgroundSecondary: '#F9FAFB', // gray.50
+    backgroundTertiary: '#F3F4F6',  // gray.100
+    backgroundLight: '#FAFBFC',
+    primaryLight: '#60A5FA',
     
     // Kids theme colors
     kids: {
@@ -113,11 +122,4 @@ export const useTheme = () => {
       min: 44,
     },
   };
-};
-
-// Export a simple provider that just passes through
-import React from 'react';
-
-export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  return <>{children}</>;
 };

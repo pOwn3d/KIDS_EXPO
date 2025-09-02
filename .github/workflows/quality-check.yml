@@ -1,0 +1,130 @@
+name: Quality Check
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+
+jobs:
+  code-quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run lint check
+        run: npm run lint
+
+      - name: Run TypeScript check  
+        run: npm run type-check
+
+      - name: Check for console.log statements
+        run: |
+          if grep -r "console\.log" src/ --include="*.ts" --include="*.tsx" --exclude-dir=node_modules; then
+            echo "❌ Found console.log statements in source code"
+            exit 1
+          else
+            echo "✅ No console.log statements found"
+          fi
+
+      - name: Check for TODO comments
+        run: |
+          TODO_COUNT=$(grep -r "TODO\|FIXME\|HACK" src/ --include="*.ts" --include="*.tsx" --exclude-dir=node_modules | wc -l || echo 0)
+          echo "Found $TODO_COUNT TODO/FIXME/HACK comments"
+          
+          if [ $TODO_COUNT -gt 5 ]; then
+            echo "❌ Too many TODO/FIXME/HACK comments ($TODO_COUNT). Please resolve some before merging."
+            exit 1
+          else
+            echo "✅ TODO/FIXME/HACK comments within acceptable range"
+          fi
+
+      - name: Check bundle size (approximate)
+        run: |
+          echo "📦 Checking estimated bundle size..."
+          du -sh node_modules/ || echo "Could not calculate node_modules size"
+          
+          # Count lines of code
+          LINES=$(find src/ -name "*.ts" -o -name "*.tsx" | xargs wc -l | tail -1 | awk '{print $1}')
+          echo "Total lines of code: $LINES"
+          
+          if [ $LINES -gt 50000 ]; then
+            echo "⚠️ Large codebase detected ($LINES lines). Consider code splitting."
+          fi
+
+  security-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run npm audit
+        run: |
+          npm audit --audit-level=high --production
+          echo "✅ Security audit completed"
+
+      - name: Check for sensitive data
+        run: |
+          echo "🔍 Checking for potentially sensitive data..."
+          
+          # Check for common sensitive patterns
+          if grep -r -i "password\|secret\|key\|token" src/ --include="*.ts" --include="*.tsx" --exclude-dir=node_modules | grep -v "// @security-ignore" | grep -v "testID\|placeholder\|label"; then
+            echo "⚠️ Found potential sensitive data patterns. Review carefully."
+            echo "Add '// @security-ignore' comment if these are intentional."
+          else
+            echo "✅ No obvious sensitive data patterns found"
+          fi
+
+  dependency-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Check for unused dependencies
+        run: |
+          echo "📦 Analyzing dependencies..."
+          
+          # Install depcheck
+          npm install -g depcheck
+          
+          # Run depcheck
+          depcheck --ignores="@types/*,detox,jest,eslint*,@testing-library/*,@babel/*" || echo "Some unused dependencies found - review recommended"
+          
+      - name: Check dependency versions
+        run: |
+          echo "🔄 Checking for outdated dependencies..."
+          npm outdated || echo "Some outdated dependencies found - update when possible"

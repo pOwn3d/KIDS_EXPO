@@ -113,7 +113,7 @@ export class ThemeValidator {
     }
 
     return {
-      wcagLevel: score >= 95 ? 'AAA' : 'AA' as const,
+      wcagLevel: (score >= 95 ? 'AAA' : 'AA') as 'AAA' | 'AA',
       overallScore: Math.max(0, score),
       contrastRatio: Math.round(primaryContrast * 10) / 10,
       touchTargetCompliance: minTouchTarget >= 44,
