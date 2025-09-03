@@ -15,20 +15,29 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../hooks/useSimpleTheme';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { missionsService } from '../../services/missions.service';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState, AppDispatch } from '../../store/store';
+import { fetchMissionsAsync, setMissions } from '../../store/slices/missionsSlice';
+import { useParentAccess } from '../../hooks/useParentAccess';
 
 interface Mission {
-  id: string;
+  id: string | number;
   name: string;
+  title?: string;
   description: string;
   points: number;
-  status: 'active' | 'completed' | 'pending_validation' | 'failed' | 'inactive';
+  pointsReward?: number;
+  status: 'active' | 'completed' | 'pending_validation' | 'failed' | 'inactive' | 'pending' | 'validated' | 'rejected';
   type: 'daily' | 'weekly' | 'monthly' | 'once';
-  assignedTo: string[];
+  assignedTo?: string[];
+  child?: any;
   dueDate?: string;
   completedAt?: string;
   category?: string;
+  isActive?: boolean;
+  createdAt?: string;
 }
 
 interface MissionCardProps {
@@ -144,7 +153,7 @@ const MissionCard: React.FC<MissionCardProps> = ({ mission, onPress, onValidate 
             <View style={styles.pointsContainer}>
               <Ionicons name="star" size={14} color="#FFD700" />
               <Text style={[styles.pointsText, { color: theme.colors.text }]}>
-                {mission.points} pts
+                {mission.pointsReward || mission.points || 0} pts
               </Text>
             </View>
             {mission.dueDate && (
@@ -180,26 +189,44 @@ const MissionCard: React.FC<MissionCardProps> = ({ mission, onPress, onValidate 
 const MissionsListScreen: React.FC = () => {
   const theme = useTheme();
   const navigation = useNavigation();
-  const [missions, setMissions] = useState<Mission[]>([]);
+  const dispatch = useDispatch<AppDispatch>();
+  const missionsFromRedux = useSelector((state: RootState) => state.missions.missions);
+  const isLoadingRedux = useSelector((state: RootState) => state.missions.isLoading);
+  const [missions, setMissionsLocal] = useState<Mission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [filter, setFilter] = useState<'all' | 'active' | 'pending' | 'completed'>('all');
+  const [filter, setFilter] = useState<'all' | 'active' | 'pending' | 'completed'>('all');  // Par défaut sur 'all' pour voir toutes les missions
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // Utiliser le hook pour l'accès parent
+  const { hasParentAccess } = useParentAccess();
 
+  // Charger les missions au focus de l'écran
+  useFocusEffect(
+    React.useCallback(() => {
+      loadMissions();
+    }, [])
+  );
+
+  // Synchroniser avec Redux
   useEffect(() => {
-    loadMissions();
-  }, []);
+    if (missionsFromRedux && missionsFromRedux.length > 0) {
+      setMissionsLocal(missionsFromRedux);
+    }
+  }, [missionsFromRedux]);
 
   const loadMissions = async () => {
     try {
       setIsLoading(true);
       const data = await missionsService.getAllMissions();
-      console.log('Missions loaded from API:', data);
-      setMissions(data);
+      setMissionsLocal(data);
+      // Mettre à jour Redux aussi
+      dispatch(setMissions(data));
     } catch (error) {
-      console.error('Failed to load missions:', error);
-      Alert.alert('Erreur', 'Impossible de charger les missions');
-      setMissions([]);
+      if (Platform.OS !== 'web') {
+        Alert.alert('Erreur', 'Impossible de charger les missions');
+      }
+      setMissionsLocal([]);
     } finally {
       setIsLoading(false);
       setRefreshing(false);
@@ -211,10 +238,12 @@ const MissionsListScreen: React.FC = () => {
     loadMissions();
   };
 
-  const handleValidateMission = async (missionId: string) => {
+  const handleValidateMission = async (missionId: string | number) => {
     try {
-      await missionsService.validateMission(missionId);
-      Alert.alert('Succès', 'Mission validée avec succès');
+      await missionsService.validateMission(Number(missionId));
+      if (Platform.OS !== 'web') {
+        Alert.alert('Succès', 'Mission validée avec succès');
+      }
       loadMissions();
     } catch (error) {
       console.error('Failed to validate mission:', error);
@@ -230,9 +259,9 @@ const MissionsListScreen: React.FC = () => {
     return missions.filter(mission => {
       // Filtre par statut
       let statusMatch = true;
-      if (filter === 'active') statusMatch = mission.status === 'active';
-      else if (filter === 'pending') statusMatch = mission.status === 'pending_validation';
-      else if (filter === 'completed') statusMatch = mission.status === 'completed';
+      if (filter === 'active') statusMatch = mission.status === 'active' || mission.status === 'pending';
+      else if (filter === 'pending') statusMatch = mission.status === 'pending_validation' || mission.status === 'pending';
+      else if (filter === 'completed') statusMatch = mission.status === 'completed' || mission.status === 'validated';
       
       // Filtre par recherche
       let searchMatch = true;
@@ -247,7 +276,7 @@ const MissionsListScreen: React.FC = () => {
     });
   }, [missions, filter, searchQuery]);
 
-  const pendingCount = missions.filter(m => m.status === 'pending_validation').length;
+  const pendingCount = hasParentAccess ? missions.filter(m => m.status === 'pending_validation' || m.status === 'pending').length : 0;
 
   if (isLoading) {
     return (
@@ -266,7 +295,7 @@ const MissionsListScreen: React.FC = () => {
             <Text style={[styles.title, { color: theme.colors.text }]}>
               Missions
             </Text>
-            {pendingCount > 0 && (
+            {pendingCount > 0 && hasParentAccess && (
               <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
                 {pendingCount} mission{pendingCount > 1 ? 's' : ''} en attente de validation
               </Text>
@@ -310,9 +339,9 @@ const MissionsListScreen: React.FC = () => {
       >
         {[
           { key: 'all', label: 'Toutes', count: missions.length },
-          { key: 'active', label: 'Actives', count: missions.filter(m => m.status === 'active').length },
-          { key: 'pending', label: 'En attente', count: pendingCount },
-          { key: 'completed', label: 'Terminées', count: missions.filter(m => m.status === 'completed').length },
+          { key: 'active', label: 'Actives', count: missions.filter(m => m.status === 'active' || m.status === 'pending').length },
+          ...(hasParentAccess ? [{ key: 'pending', label: 'En attente', count: pendingCount }] : []),
+          { key: 'completed', label: 'Terminées', count: missions.filter(m => m.status === 'completed' || m.status === 'validated').length },
         ].map((tab) => (
           <TouchableOpacity
             key={tab.key}
@@ -373,7 +402,7 @@ const MissionsListScreen: React.FC = () => {
               key={mission.id}
               mission={mission}
               onPress={undefined}
-              onValidate={mission.status === 'pending_validation' 
+              onValidate={(mission.status === 'pending_validation' || mission.status === 'pending') && hasParentAccess
                 ? () => handleValidateMission(mission.id)
                 : undefined
               }

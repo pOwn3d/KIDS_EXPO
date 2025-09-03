@@ -18,7 +18,6 @@ class TournamentsService {
    */
   async getTournaments(filters?: TournamentFilters): Promise<TournamentsCollectionResponse> {
     try {
-      console.log('🏆 Fetching tournaments...');
       
       const params = new URLSearchParams();
       if (filters?.status) params.append('status', filters.status);
@@ -31,10 +30,8 @@ class TournamentsService {
 
       const response = await apiClient.get<TournamentsCollectionResponse>(url);
       
-      console.log('✅ Tournaments loaded:', response);
       return response;
     } catch (error) {
-      console.error('❌ Error fetching tournaments:', error);
       throw error;
     }
   }
@@ -51,16 +48,13 @@ class TournamentsService {
    */
   async getTournament(tournamentId: number): Promise<Tournament> {
     try {
-      console.log(`🏆 Fetching tournament ${tournamentId}...`);
       
       const response = await apiClient.get<Tournament>(
         API_ENDPOINTS.TOURNAMENTS.GET(tournamentId)
       );
       
-      console.log('✅ Tournament loaded:', response);
       return response;
     } catch (error) {
-      console.error(`❌ Error fetching tournament ${tournamentId}:`, error);
       throw error;
     }
   }
@@ -70,16 +64,13 @@ class TournamentsService {
    */
   async joinTournament(tournamentId: number, childId: number): Promise<void> {
     try {
-      console.log(`🏆 Joining tournament ${tournamentId}...`);
       
       await apiClient.post(
         API_ENDPOINTS.TOURNAMENTS.JOIN(tournamentId),
         { child: `/api/children/${childId}` }
       );
       
-      console.log('✅ Tournament joined successfully');
     } catch (error) {
-      console.error(`❌ Error joining tournament ${tournamentId}:`, error);
       throw error;
     }
   }
@@ -89,16 +80,13 @@ class TournamentsService {
    */
   async getTournamentLeaderboard(tournamentId: number): Promise<TournamentLeaderboard> {
     try {
-      console.log(`🏆 Fetching tournament ${tournamentId} leaderboard...`);
       
       const response = await apiClient.get<TournamentLeaderboard>(
         API_ENDPOINTS.TOURNAMENTS.LEADERBOARD(tournamentId)
       );
       
-      console.log('✅ Tournament leaderboard loaded:', response);
       return response;
     } catch (error) {
-      console.error(`❌ Error fetching tournament leaderboard:`, error);
       throw error;
     }
   }
@@ -108,17 +96,14 @@ class TournamentsService {
    */
   async createTournament(tournamentData: Partial<Tournament>): Promise<Tournament> {
     try {
-      console.log('🏆 Creating tournament...');
       
       const response = await apiClient.post<Tournament>(
         API_ENDPOINTS.TOURNAMENTS.CREATE,
         tournamentData
       );
       
-      console.log('✅ Tournament created:', response);
       return response;
     } catch (error) {
-      console.error('❌ Error creating tournament:', error);
       throw error;
     }
   }

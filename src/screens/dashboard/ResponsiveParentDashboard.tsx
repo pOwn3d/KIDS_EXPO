@@ -155,16 +155,7 @@ const ResponsiveParentDashboard: React.FC = () => {
   const recentActivities = activityFeed || [];
   const isLoading = isSyncing;
   
-  console.log('📊 ResponsiveParentDashboard - Data:', {
-    hasParentData: !!parentData,
-    childrenCount: parentData?.children?.total,
-    missions: missions,
-    rewards: rewards,
-    points: points
-  });
-  
   const [refreshing, setRefreshing] = useState(false);
-  const [addChildModalVisible, setAddChildModalVisible] = useState(false);
   const [childName, setChildName] = useState('');
 
   const handleRefresh = async () => {
@@ -180,7 +171,6 @@ const ResponsiveParentDashboard: React.FC = () => {
     }
     
     try {
-      console.log('Adding child:', childName);
       setAddChildModalVisible(false);
       setChildName('');
       Alert.alert('Succès', 'Enfant ajouté avec succès');
@@ -195,37 +185,37 @@ const ResponsiveParentDashboard: React.FC = () => {
       title: 'Nouvelle Mission', 
       icon: 'add-circle' as keyof typeof Ionicons.glyphMap, 
       color: '#10B981',
-      onPress: () => navigation.navigate('CreateMission' as never)
-    },
-    { 
-      title: 'Ajouter Enfant', 
-      icon: 'person-add' as keyof typeof Ionicons.glyphMap, 
-      color: '#0EA5E9',
-      onPress: () => setAddChildModalVisible(true)
+      onPress: () => navigation.navigate('Missions' as never, { screen: 'CreateMission' } as never)
     },
     { 
       title: 'Nouvelle Récompense', 
       icon: 'gift' as keyof typeof Ionicons.glyphMap, 
       color: '#F59E0B',
-      onPress: () => navigation.navigate('CreateReward' as never)
+      onPress: () => navigation.navigate('Rewards' as never, { screen: 'CreateReward' } as never)
     },
     { 
       title: 'Valider Missions', 
       icon: 'checkmark-circle' as keyof typeof Ionicons.glyphMap, 
       color: '#A855F7',
-      onPress: () => navigation.navigate('PendingMissions' as never)
+      onPress: () => navigation.navigate('Missions' as never, { screen: 'MissionValidation' } as never)
     },
     { 
       title: 'Approuver Récompenses', 
       icon: 'ribbon' as keyof typeof Ionicons.glyphMap, 
       color: '#EC4899',
-      onPress: () => navigation.navigate('PendingRewards' as never)
+      onPress: () => navigation.navigate('Rewards' as never, { screen: 'RewardClaims' } as never)
+    },
+    { 
+      title: 'Gérer Punitions', 
+      icon: 'warning' as keyof typeof Ionicons.glyphMap, 
+      color: '#EF4444',
+      onPress: () => navigation.navigate('Punishments' as never, { screen: 'PunishmentManagement' } as never)
     },
     { 
       title: 'Statistiques', 
       icon: 'stats-chart' as keyof typeof Ionicons.glyphMap, 
       color: '#6366F1',
-      onPress: () => navigation.navigate('Statistics' as never)
+      onPress: () => navigation.navigate('Dashboard' as never)
     },
   ];
 
@@ -276,15 +266,7 @@ const ResponsiveParentDashboard: React.FC = () => {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: '#F8FAFC' }]}>
-      {/* Custom Header for Desktop */}
-      {isDesktop && (
-        <WebHeader 
-          title="Tableau de Bord"
-          subtitle="Gérez votre famille avec simplicité et efficacité"
-          icon="grid"
-          notificationCount={3}
-        />
-      )}
+      {/* Pas de header sur desktop - on utilise seulement la sidebar */}
       
       <ScrollView
         style={styles.scrollView}
@@ -302,7 +284,7 @@ const ResponsiveParentDashboard: React.FC = () => {
         showsVerticalScrollIndicator={false}
       >
         {/* Welcome Section */}
-        <View style={[styles.header, { marginBottom: isDesktop ? 32 : 24, marginTop: isDesktop ? 0 : 0 }]}>
+        <View style={[styles.header, { marginBottom: isDesktop ? 32 : 24, marginTop: isDesktop ? 24 : 0 }]}>
           <View>
             <Text style={[styles.welcomeText, { fontSize: isDesktop ? 32 : 28 }]}>
               Bonjour, {user?.firstName || 'Parent'} 👋
@@ -332,7 +314,7 @@ const ResponsiveParentDashboard: React.FC = () => {
           { 
             flexDirection: isTablet ? 'row' : 'column',
             flexWrap: isTablet ? 'wrap' : 'nowrap',
-            gap: isDesktop ? 20 : 16,
+            gap: 10,
           }
         ]}>
           {statsCards.map((stat, index) => (
@@ -362,7 +344,7 @@ const ResponsiveParentDashboard: React.FC = () => {
         <View style={[styles.section, { marginTop: isDesktop ? 40 : 32 }]}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Activités Récentes</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Activities' as never)}>
+            <TouchableOpacity onPress={() => navigation.navigate('Dashboard' as never)}>
               <Text style={[styles.viewAllText, { color: theme.colors.primary }]}>
                 Voir tout →
               </Text>
@@ -411,44 +393,6 @@ const ResponsiveParentDashboard: React.FC = () => {
           </View>
         </View>
       </ScrollView>
-
-      {/* Add Child Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={addChildModalVisible}
-        onRequestClose={() => setAddChildModalVisible(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={[styles.modalContent, { backgroundColor: theme.colors.card }]}>
-            <Text style={styles.modalTitle}>Ajouter un Enfant</Text>
-            
-            <TextInput
-              style={[styles.input, { borderColor: theme.colors.border }]}
-              placeholder="Nom de l'enfant"
-              placeholderTextColor={theme.colors.textLight}
-              value={childName}
-              onChangeText={setChildName}
-            />
-            
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => setAddChildModalVisible(false)}
-              >
-                <Text style={styles.cancelButtonText}>Annuler</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={[styles.modalButton, styles.confirmButton, { backgroundColor: theme.colors.primary }]}
-                onPress={handleAddChild}
-              >
-                <Text style={styles.confirmButtonText}>Ajouter</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
     </SafeAreaView>
   );
 };
@@ -591,6 +535,7 @@ const styles = StyleSheet.create({
   },
   quickActionsGrid: {
     marginTop: 16,
+    gap: 10,
   },
   quickAction: {
     padding: 16,

@@ -54,7 +54,10 @@ const DashboardStackNavigator: React.FC = () => {
   return (
     <Stack.Navigator
       initialRouteName="DashboardHome"
-      screenOptions={commonScreenOptions}
+      screenOptions={{
+        ...commonScreenOptions,
+        headerShown: platform.isDesktop ? false : true,
+      }}
     >
       {/* Main Dashboard */}
       <Stack.Screen
@@ -62,7 +65,6 @@ const DashboardStackNavigator: React.FC = () => {
         component={DashboardHomeScreen}
         options={{
           title: 'Tableau de bord',
-          headerShown: platform.isDesktop ? false : true,
           headerLargeTitle: platform.isTablet,
           headerSearchBarOptions: platform.isTablet ? {
             placeholder: 'Rechercher...',

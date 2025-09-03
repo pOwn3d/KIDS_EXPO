@@ -13,7 +13,6 @@ class AuthService {
    */
   async login(credentials: LoginRequest): Promise<LoginResponse> {
     try {
-      console.log('🔍 Attempting login with API Platform...', { email: credentials.email });
       
       const response = await apiClient.post<LoginResponse>(
         API_ENDPOINTS.AUTH.LOGIN,
@@ -28,11 +27,6 @@ class AuthService {
         }
       );
       
-      console.log('Login response:', {
-        hasUser: !!(response.data?.user || response.user),
-        hasToken: !!(response.data?.token || response.token),
-        fullResponse: response
-      });
       
       // Handle both direct response and nested data response
       const token = response.data?.token || response.token;
@@ -62,7 +56,6 @@ class AuthService {
       
       throw new Error('Login failed - no token received');
     } catch (error: any) {
-      console.error('🚨 Login error:', error.response?.data || error.message);
       
       // Handle API Platform error format
       if (error.response?.data?.['hydra:description']) {
@@ -78,7 +71,6 @@ class AuthService {
    */
   async loginChild(parentEmail: string, childId: string, pin: string): Promise<LoginResponse> {
     try {
-      console.log('🔍 Logging in child with API Platform...', { parentEmail, childId });
       
       // D'abord vérifier le PIN
       const pinResponse = await apiClient.post<{ valid: boolean; token?: string }>(
@@ -110,10 +102,6 @@ class AuthService {
         }
       );
       
-      console.log('Child selection response:', {
-        hasUser: !!response.user,
-        hasToken: !!response.token
-      });
       
       if (response.token) {
         const token = response.token;
@@ -133,7 +121,6 @@ class AuthService {
       
       throw new Error('Failed to select child - no token received');
     } catch (error: any) {
-      console.error('🚨 Child login error:', error);
       
       if (error.response?.data?.['hydra:description']) {
         throw new Error(error.response.data['hydra:description']);
@@ -148,7 +135,6 @@ class AuthService {
    */
   async validateParentPin(pin: string): Promise<boolean> {
     try {
-      console.log('🔍 Validating parent PIN with API Platform...');
       
       // Récupérer l'email de l'utilisateur actuel
       const currentUser = await this.getCurrentUser();
@@ -169,10 +155,8 @@ class AuthService {
         }
       );
       
-      console.log('PIN validation response:', { valid: response.valid });
       return response.valid === true;
     } catch (error: any) {
-      console.error('🚨 PIN validation error:', error);
       return false;
     }
   }
@@ -182,7 +166,6 @@ class AuthService {
    */
   async setParentPin(pin: string, oldPin?: string): Promise<boolean> {
     try {
-      console.log('🔍 Setting parent PIN with API Platform...');
       
       const token = await this.getToken();
       if (!token) {
@@ -203,10 +186,8 @@ class AuthService {
         }
       );
       
-      console.log('Set PIN response:', { success: response.success });
       return response.success === true;
     } catch (error: any) {
-      console.error('🚨 Set PIN error:', error);
       return false;
     }
   }
@@ -216,7 +197,6 @@ class AuthService {
    */
   async validateInvitationToken(token: string): Promise<{ valid: boolean; message?: string }> {
     try {
-      console.log('🔍 Validating invitation token with API Platform...');
       
       const response = await apiClient.post<{ valid: boolean; message?: string }>(
         API_ENDPOINTS.AUTH.VALIDATE_INVITATION,
@@ -228,10 +208,8 @@ class AuthService {
         }
       );
       
-      console.log('Invitation validation response:', response);
       return response;
     } catch (error: any) {
-      console.error('🚨 Invitation validation error:', error);
       
       if (error.response?.data?.['hydra:description']) {
         return { valid: false, message: error.response.data['hydra:description'] };
@@ -249,7 +227,6 @@ class AuthService {
    */
   async registerWithInvitation(data: RegisterWithInvitationRequest): Promise<LoginResponse> {
     try {
-      console.log('🔍 Registering with invitation token...');
       
       const response = await apiClient.post<LoginResponse>(
         API_ENDPOINTS.AUTH.REGISTER_WITH_INVITATION,
@@ -267,10 +244,6 @@ class AuthService {
         }
       );
       
-      console.log('Register with invitation response:', {
-        hasUser: !!response.user,
-        hasToken: !!response.token
-      });
       
       if (response.token) {
         await this.saveToken(response.token);
@@ -289,7 +262,6 @@ class AuthService {
       
       throw new Error('Registration failed - no token received');
     } catch (error: any) {
-      console.error('🚨 Registration with invitation error:', error);
       
       if (error.response?.data?.['hydra:description']) {
         throw new Error(error.response.data['hydra:description']);
@@ -304,7 +276,6 @@ class AuthService {
    */
   async register(data: RegisterRequest): Promise<LoginResponse> {
     try {
-      console.log('🔍 Registering with API Platform...');
       
       const response = await apiClient.post<LoginResponse>(
         API_ENDPOINTS.AUTH.REGISTER,
@@ -321,10 +292,6 @@ class AuthService {
         }
       );
       
-      console.log('Register response:', {
-        hasUser: !!response.user,
-        hasToken: !!response.token
-      });
       
       if (response.token) {
         await this.saveToken(response.token);
@@ -343,7 +310,6 @@ class AuthService {
       
       throw new Error('Registration failed - no token received');
     } catch (error: any) {
-      console.error('🚨 Registration error:', error);
       
       if (error.response?.data?.['hydra:description']) {
         throw new Error(error.response.data['hydra:description']);
@@ -358,7 +324,6 @@ class AuthService {
    */
   async refreshToken(refreshToken: string): Promise<LoginResponse> {
     try {
-      console.log('🔍 Refreshing token with API Platform...');
       
       const response = await apiClient.post<LoginResponse>(
         API_ENDPOINTS.AUTH.REFRESH,
@@ -371,9 +336,6 @@ class AuthService {
         }
       );
       
-      console.log('Token refresh response:', {
-        hasToken: !!response.token
-      });
       
       if (response.token) {
         await this.saveToken(response.token);
@@ -388,7 +350,6 @@ class AuthService {
       
       throw new Error('Token refresh failed - no token received');
     } catch (error: any) {
-      console.error('🚨 Token refresh error:', error);
       
       if (error.response?.data?.['hydra:description']) {
         throw new Error(error.response.data['hydra:description']);
@@ -405,7 +366,6 @@ class AuthService {
     try {
       const token = await this.getToken();
       if (token) {
-        console.log('🔍 Logging out with API Platform...');
         
         // Appeler l'API de logout si elle existe
         await apiClient.post(
@@ -419,12 +379,10 @@ class AuthService {
           }
         ).catch((error) => {
           // Ignorer les erreurs de logout côté serveur mais les logger
-          console.warn('Logout API call failed:', error.message);
         });
       }
     } finally {
       // Toujours nettoyer le stockage local
-      console.log('🧹 Clearing local storage...');
       await this.clearStorage();
     }
   }
@@ -437,7 +395,6 @@ class AuthService {
       const userStr = await AsyncStorage.getItem(this.userKey);
       return userStr ? JSON.parse(userStr) : null;
     } catch (error) {
-      console.error('Get current user error:', error);
       return null;
     }
   }
@@ -462,7 +419,6 @@ class AuthService {
       }
       return token;
     } catch (error) {
-      console.error('Get token error:', error);
       return null;
     }
   }
@@ -474,7 +430,6 @@ class AuthService {
     try {
       await AsyncStorage.setItem(this.tokenKey, token);
     } catch (error) {
-      console.error('Save token error:', error);
     }
   }
 
@@ -485,7 +440,6 @@ class AuthService {
     try {
       await AsyncStorage.setItem(this.refreshTokenKey, refreshToken);
     } catch (error) {
-      console.error('Save refresh token error:', error);
     }
   }
 
@@ -496,7 +450,6 @@ class AuthService {
     try {
       await AsyncStorage.setItem(this.userKey, JSON.stringify(user));
     } catch (error) {
-      console.error('Save user error:', error);
     }
   }
 
@@ -512,7 +465,6 @@ class AuthService {
         'access_token'  // Aussi nettoyer access_token
       ]);
     } catch (error) {
-      console.error('Clear storage error:', error);
     }
   }
 }

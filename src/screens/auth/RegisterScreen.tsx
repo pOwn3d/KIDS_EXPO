@@ -159,7 +159,6 @@ const RegisterScreen: React.FC<Props> = ({ route, navigation }) => {
           lastName: formData.lastName,
         }).unwrap();
         
-        console.log('Registration with invitation successful:', result);
         Alert.alert(
           'Inscription réussie !', 
           'Votre compte a été créé avec succès. Vous pouvez maintenant vous connecter.',
@@ -180,7 +179,6 @@ const RegisterScreen: React.FC<Props> = ({ route, navigation }) => {
           lastName: formData.lastName,
         }).unwrap();
         
-        console.log('Registration successful:', result);
         Alert.alert(
           'Inscription réussie !', 
           'Votre compte a été créé avec succès.',
@@ -259,7 +257,7 @@ const RegisterScreen: React.FC<Props> = ({ route, navigation }) => {
       lineHeight: 20,
     },
     form: {
-      gap: 20,
+      gap: 10,
     },
     row: {
       flexDirection: 'row',

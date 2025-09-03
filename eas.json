@@ -24,9 +24,26 @@
         "resourceClass": "m-medium"
       }
     },
+    "adhoc": {
+      "distribution": "internal",
+      "ios": {
+        "resourceClass": "m-medium",
+        "buildConfiguration": "Release"
+      }
+    },
+    "testflight": {
+      "distribution": "store",
+      "ios": {
+        "resourceClass": "m-medium",
+        "buildConfiguration": "Release",
+        "autoIncrement": true
+      }
+    },
     "production": {
       "ios": {
-        "resourceClass": "m-medium"
+        "resourceClass": "m-medium",
+        "buildConfiguration": "Release",
+        "autoIncrement": true
       }
     }
   },

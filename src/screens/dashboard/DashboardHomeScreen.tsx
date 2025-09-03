@@ -219,12 +219,12 @@ const DashboardHomeScreen: React.FC<Props> = ({ navigation }) => {
       flexDirection: 'row',
       flexWrap: 'wrap',
       justifyContent: 'space-between',
-      gap: platform.isDesktop ? 16 : 12,
+      gap: 10,
     },
     quickActions: {
       flexDirection: 'row',
       flexWrap: 'wrap',
-      gap: isChildMode ? 16 : 12,
+      gap: 10,
       justifyContent: isChildMode ? 'center' : 'flex-start',
     },
     activityItem: {
@@ -350,38 +350,38 @@ const DashboardHomeScreen: React.FC<Props> = ({ navigation }) => {
       title: 'Create Mission', 
       icon: 'add-circle' as const, 
       color: CrayonColors.successGreen,
-      action: () => navigation.navigate('CreateMission' as never)
+      action: () => navigation.navigate('Missions' as never, { screen: 'CreateMission' } as never)
     },
     { 
       title: 'Add Reward', 
       icon: 'gift' as const, 
       color: CrayonColors.sunYellow,
-      action: () => navigation.navigate('CreateReward' as never)
+      action: () => navigation.navigate('Rewards' as never, { screen: 'CreateReward' } as never)
     },
     { 
       title: 'View Reports', 
       icon: 'bar-chart' as const, 
       color: CrayonColors.electricBlue,
-      action: () => navigation.navigate('Statistics' as never)
+      action: () => navigation.navigate('Dashboard' as never)
     },
   ] : [
     { 
-      title: 'View Missions', 
-      icon: 'list' as const, 
+      title: 'Demander Mission', 
+      icon: 'hand-right' as const, 
       color: CrayonColors.electricBlue,
-      action: () => navigation.navigate('Missions' as never)
+      action: () => navigation.navigate('Missions' as never, { screen: 'RequestMission' } as never)
     },
     { 
-      title: 'Shop Rewards', 
+      title: 'Boutique Récompenses', 
       icon: 'storefront' as const, 
       color: CrayonColors.sunYellow,
-      action: () => navigation.navigate('Rewards' as never)
+      action: () => navigation.navigate('Rewards' as never, { screen: 'ClaimReward' } as never)
     },
     { 
-      title: 'Feed Pet', 
-      icon: 'heart' as const, 
-      color: CrayonColors.candyPink,
-      action: () => navigation.navigate('VirtualPet' as never)
+      title: 'Mes Missions', 
+      icon: 'list' as const, 
+      color: CrayonColors.successGreen,
+      action: () => navigation.navigate('Missions' as never)
     },
   ];
 

@@ -8,6 +8,8 @@ import { usePlatform } from '../../hooks/usePlatform';
 import MissionsHomeScreen from '../../screens/missions/MissionsHomeScreen';
 import CreateMissionScreen from '../../screens/missions/CreateMissionScreen';
 import MissionDetailScreen from '../../screens/missions/MissionDetailScreen';
+import MissionValidationScreen from '../../screens/missions/MissionValidationScreen';
+import ChildMissionRequestScreen from '../../screens/missions/ChildMissionRequestScreen';
 
 const Stack = createNativeStackNavigator<MissionsStackParamList>();
 
@@ -37,6 +39,16 @@ const MissionsStackNavigator: React.FC = () => {
         name="CreateMission" 
         component={CreateMissionScreen} 
         options={{ title: 'Nouvelle mission' }} 
+      />
+      <Stack.Screen 
+        name="MissionValidation" 
+        component={MissionValidationScreen} 
+        options={{ title: 'Valider les missions' }} 
+      />
+      <Stack.Screen 
+        name="RequestMission" 
+        component={ChildMissionRequestScreen} 
+        options={{ title: 'Demander une mission' }} 
       />
     </Stack.Navigator>
   );

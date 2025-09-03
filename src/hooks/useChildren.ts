@@ -40,7 +40,6 @@ export const useChildren = () => {
   // Fetch children on mount if empty
   useEffect(() => {
     if (children.length === 0 && !isLoading) {
-      console.log('📱 useChildren: Fetching children on mount...');
       dispatch(fetchChildrenAsync());
     }
   }, []);

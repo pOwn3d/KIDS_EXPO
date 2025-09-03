@@ -91,6 +91,7 @@ export type MainDrawerParamList = {
   Children: NavigatorScreenParams<ChildrenStackParamList>;
   Missions: NavigatorScreenParams<MissionsStackParamList>;
   Rewards: NavigatorScreenParams<RewardsStackParamList>;
+  Punishments: NavigatorScreenParams<PunishmentsStackParamList>;
   Activities: undefined;
   Badges: undefined;
   Leaderboard: undefined;
@@ -142,6 +143,8 @@ export type MissionsStackParamList = {
     missionId: string;
     childId: string;
   };
+  MissionValidation: undefined;
+  RequestMission: undefined;
 };
 
 export type RewardsStackParamList = {
@@ -159,6 +162,7 @@ export type RewardsStackParamList = {
   ClaimDetails: {
     claimId: string;
   };
+  ClaimReward: undefined;
 };
 
 export type LeaderboardStackParamList = {
@@ -194,6 +198,11 @@ export type AnalyticsStackParamList = {
   ProgressReports: undefined;
   ExportData: undefined;
   GoalTracking: undefined;
+};
+
+export type PunishmentsStackParamList = {
+  PunishmentsList: undefined;
+  PunishmentManagement: undefined;
 };
 
 export type TournamentsStackParamList = {

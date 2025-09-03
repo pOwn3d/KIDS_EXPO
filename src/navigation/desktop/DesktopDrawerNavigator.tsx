@@ -15,6 +15,7 @@ import GuildsStackNavigator from '../stacks/GuildsStackNavigator';
 import ProfileStackNavigator from '../stacks/ProfileStackNavigator';
 import SparkyStackNavigator from '../stacks/SparkyStackNavigator';
 import SettingsStackNavigator from '../stacks/SettingsStackNavigator';
+import PunishmentsStackNavigator from '../stacks/PunishmentsStackNavigator';
 
 // Types and hooks
 import { MainDrawerParamList } from '../../types/app/navigation';
@@ -72,6 +73,12 @@ const CustomDrawerContent: React.FC<any> = (props) => {
       route: 'Rewards',
     },
     ...(userRole === 'PARENT' ? [
+      {
+        key: 'Punishments',
+        label: 'Punitions',
+        icon: 'warning-outline',
+        route: 'Punishments',
+      },
       {
         key: 'Analytics',
         label: 'Analytics & Reports',
@@ -447,6 +454,15 @@ const DesktopDrawerNavigator: React.FC = () => {
         component={SparkyStackNavigator}
         options={{ title: 'Sparky AI Assistant' }}
       />
+
+      {/* Punishments (Parents only) */}
+      {userRole === 'PARENT' && (
+        <Drawer.Screen
+          name="Punishments"
+          component={PunishmentsStackNavigator}
+          options={{ title: 'Punishments Management' }}
+        />
+      )}
 
       {/* Settings */}
       <Drawer.Screen

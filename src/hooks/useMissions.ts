@@ -53,7 +53,6 @@ export const useMissions = () => {
   // Fetch missions on mount if empty
   useEffect(() => {
     if (missions.length === 0 && !isLoading) {
-      console.log('🎯 useMissions: Fetching missions on mount...');
       dispatch(fetchMissionsAsync());
     }
   }, []);

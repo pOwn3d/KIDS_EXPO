@@ -19,8 +19,10 @@ import { persistor, RootState } from '../../store/store';
 
 // Import stack navigators
 import DashboardStackNavigator from '../stacks/DashboardStackNavigator';
+import ChildrenStackNavigator from '../stacks/ChildrenStackNavigator';
 import MissionsStackNavigator from '../stacks/MissionsStackNavigator';
 import RewardsStackNavigator from '../stacks/RewardsStackNavigator';
+import PunishmentsStackNavigator from '../stacks/PunishmentsStackNavigator';
 import ProfileStackNavigator from '../stacks/ProfileStackNavigator';
 import SettingsStackNavigator from '../stacks/SettingsStackNavigator';
 import LeaderboardStackNavigator from '../stacks/LeaderboardStackNavigator';
@@ -41,8 +43,6 @@ const CustomSidebar: React.FC<any> = ({ navigation, state }) => {
   const user = useSelector((state: RootState) => state.auth.user);
   
   const handleLogout = async () => {
-    console.log('handleLogout called');
-    
     // Sur web, utiliser window.confirm au lieu d'Alert
     if (Platform.OS === 'web') {
       const confirmed = window.confirm('Êtes-vous sûr de vouloir vous déconnecter ?');
@@ -50,22 +50,16 @@ const CustomSidebar: React.FC<any> = ({ navigation, state }) => {
     }
     
     try {
-      console.log('Starting logout from Desktop Navigator...');
-      
       // 1. Clear auth service storage
       await authService.logout();
-      console.log('Auth service logout complete');
       
       // 2. Dispatch logout to Redux
       dispatch(logout());
-      console.log('Redux logout dispatched');
       
       // 3. Purge persisted state to ensure clean logout
       await persistor.purge();
-      console.log('Persisted state purged');
       
       // 4. Force reload to ensure clean state
-      console.log('Reloading page...');
       window.location.href = '/';
     } catch (error) {
       console.error('Logout error:', error);
@@ -76,15 +70,19 @@ const CustomSidebar: React.FC<any> = ({ navigation, state }) => {
     }
   };
   
+  const userRole = user?.role || 'PARENT';
+  
   const menuItems = [
     { name: 'Dashboard', label: 'Tableau de bord', icon: 'grid-outline' },
+    ...(userRole === 'PARENT' ? [{ name: 'Children', label: 'Enfants', icon: 'people-outline' }] : []),
     { name: 'Missions', label: 'Missions', icon: 'list-outline' },
     { name: 'Rewards', label: 'Récompenses', icon: 'gift-outline' },
+    ...(userRole === 'PARENT' ? [{ name: 'Punishments', label: 'Punitions', icon: 'warning-outline' }] : []),
     { name: 'Activities', label: 'Activités', icon: 'analytics-outline' },
     { name: 'Badges', label: 'Badges', icon: 'ribbon-outline' },
     { name: 'Leaderboard', label: 'Classement', icon: 'trophy-outline' },
     { name: 'Tournaments', label: 'Tournois', icon: 'medal-outline' },
-    { name: 'Guilds', label: 'Guildes', icon: 'people-outline' },
+    { name: 'Guilds', label: 'Guildes', icon: 'shield-outline' },
     { name: 'Profile', label: 'Profil', icon: 'person-outline' },
     { name: 'Settings', label: 'Paramètres', icon: 'settings-outline' },
   ];
@@ -142,7 +140,6 @@ const CustomSidebar: React.FC<any> = ({ navigation, state }) => {
         <TouchableOpacity 
           style={styles.logoutButton} 
           onPress={() => {
-            console.log('Logout button clicked!');
             handleLogout();
           }}
         >
@@ -175,8 +172,10 @@ const SimpleDesktopNavigator: React.FC = () => {
       }}
     >
       <Drawer.Screen name="Dashboard" component={DashboardStackNavigator} />
+      <Drawer.Screen name="Children" component={ChildrenStackNavigator} />
       <Drawer.Screen name="Missions" component={MissionsStackNavigator} />
       <Drawer.Screen name="Rewards" component={RewardsStackNavigator} />
+      <Drawer.Screen name="Punishments" component={PunishmentsStackNavigator} />
       <Drawer.Screen name="Activities" component={ActivitiesStackNavigator} />
       <Drawer.Screen name="Badges" component={BadgesStackNavigator} />
       <Drawer.Screen name="Leaderboard" component={LeaderboardStackNavigator} />

@@ -1,12 +1,16 @@
 {
   "name": "kids-points-app",
   "version": "1.0.0",
+  "homepage": "https://pown3d.github.io/KIDS_EXPO",
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
     "start": "expo start",
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
+    "build:web": "expo export --platform web --output-dir dist",
+    "deploy": "gh-pages -d dist",
+    "predeploy": "npm run build:web",
     "eject": "expo eject",
     "test": "jest",
     "test:e2e": "detox test",

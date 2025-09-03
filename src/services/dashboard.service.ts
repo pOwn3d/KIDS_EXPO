@@ -56,12 +56,8 @@ class DashboardService {
         token = await AsyncStorage.getItem('auth_token');
       }
       
-      console.log('📱 Platform:', Platform.OS);
-      console.log('🔑 Token found:', !!token);
-      console.log('🔍 Token preview:', token ? token.substring(0, 20) + '...' : 'none');
       
       if (!token) {
-        console.warn('⚠️ No token found on', Platform.OS);
         // Retourner des données vides si pas de token au lieu de lancer une erreur
         return {
           stats: {
@@ -77,14 +73,11 @@ class DashboardService {
       }
 
       // Récupérer les données en parallèle pour optimiser
-      console.log('🔄 Fetching dashboard data...');
       const [parentAccount, children, missions, rewards] = await Promise.all([
         this.getParentAccount(token).catch(err => {
-          console.error('❌ Parent account error:', err.response?.status, err.response?.statusText);
           throw err;
         }),
         this.getChildren(token).catch(err => {
-          console.error('❌ Children fetch error:', err.response?.status, err.response?.statusText);
           return [];
         }),
         this.getMissions(token).catch(() => []),
@@ -92,11 +85,6 @@ class DashboardService {
       ]);
 
       // Calculer les statistiques
-      console.log('📊 Dashboard data received:');
-      console.log('  - Parent account:', !!parentAccount);
-      console.log('  - Children count from parent:', parentAccount?.childrenCount);
-      console.log('  - Children array length:', children?.length);
-      console.log('  - Children data:', children?.map(c => ({ id: c.id, name: c.firstName })));
       
       const stats: DashboardStats = {
         totalChildren: children?.length || parentAccount?.childrenCount || 0,
@@ -113,7 +101,6 @@ class DashboardService {
           const childId = child.id || child.publicId;
           
           if (!childId) {
-            console.warn('Child without ID or publicId:', child);
             return null;
           }
           
@@ -154,7 +141,6 @@ class DashboardService {
         recentActivities,
       };
     } catch (error: any) {
-      console.error('Dashboard fetch error:', error);
       throw new Error(error.response?.data?.message || error.message || 'Failed to fetch dashboard');
     }
   }
@@ -174,7 +160,6 @@ class DashboardService {
       );
       return response.data.data;
     } catch (error) {
-      console.error('Parent account fetch error:', error);
       return { childrenCount: 0, children: [] };
     }
   }
@@ -194,7 +179,6 @@ class DashboardService {
       );
       return Array.isArray(response.data) ? response.data : response.data.data || [];
     } catch (error) {
-      console.error('Children fetch error:', error);
       return [];
     }
   }
@@ -214,7 +198,6 @@ class DashboardService {
       );
       return response.data.data;
     } catch (error) {
-      console.error(`Child dashboard fetch error for child ${childId}:`, error);
       return null;
     }
   }
@@ -234,7 +217,6 @@ class DashboardService {
       );
       return Array.isArray(response.data) ? response.data : response.data.data || [];
     } catch (error) {
-      console.error('Missions fetch error:', error);
       return [];
     }
   }
@@ -254,7 +236,6 @@ class DashboardService {
       );
       return Array.isArray(response.data) ? response.data : response.data.data || [];
     } catch (error) {
-      console.error('Rewards fetch error:', error);
       return [];
     }
   }
@@ -311,9 +292,7 @@ class DashboardService {
         } catch (error: any) {
           // Gestion silencieuse des erreurs 500 de l'API history (problème backend connu)
           if (error.response?.status === 500) {
-            console.warn(`⚠️  History API endpoint error for child ${childId} - backend issue`);
           } else {
-            console.error(`Activity history error for child ${childId}:`, error);
           }
         }
       }
@@ -323,7 +302,6 @@ class DashboardService {
         .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
         .slice(0, 10);
     } catch (error) {
-      console.error('Recent activities fetch error:', error);
       return [];
     }
   }
@@ -410,7 +388,6 @@ class DashboardService {
 
       return response.data.success === true;
     } catch (error: any) {
-      console.error('Add child error:', error);
       throw new Error(error.response?.data?.message || error.message || 'Failed to add child');
     }
   }

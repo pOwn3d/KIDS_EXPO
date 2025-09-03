@@ -25,7 +25,6 @@ class ChildrenService {
       }
       return token;
     } catch (error) {
-      console.error('Error getting auth token:', error);
       return null;
     }
   }
@@ -35,49 +34,35 @@ class ChildrenService {
     try {
       const token = await this.getAuthToken();
       if (!token) {
-        console.warn('⚠️ No token found for children fetch');
         return [];
       }
 
-      console.log('🔍 Fetching children with API Platform endpoint...');
-      console.log('Token used:', token.substring(0, 20) + '...');
       
-      const response = await apiClient.get<ChildrenCollectionResponse>(
+      const response = await apiClient.get<any>(
         API_ENDPOINTS.CHILDREN.LIST,
         {},
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            Accept: 'application/ld+json',
+            Accept: 'application/json',
           },
         }
       );
       
-      console.log('Raw response type:', typeof response);
-      
-      // Handle both direct array and hydra format
+      // Handle the standardized API response format
       let childrenArray: any[] = [];
       
-      if (Array.isArray(response)) {
-        // Direct array format
+      if (response && response.success && response.data) {
+        // Standardized response format from backend
+        childrenArray = Array.isArray(response.data) ? response.data : [];
+      } else if (Array.isArray(response)) {
+        // Direct array format (fallback)
         childrenArray = response;
-        console.log('✅ Children API response (direct array):', childrenArray.length, 'children');
-      } else if (response && typeof response === 'object') {
-        // Check for different object formats
-        if (response['hydra:member']) {
-          // Hydra format
-          childrenArray = response['hydra:member'];
-          console.log('✅ Children API response (hydra:member):', childrenArray.length, 'children');
-        } else if (response.member) {
-          // API Platform format
-          childrenArray = response.member;
-          console.log('✅ Children API response (member):', childrenArray.length, 'children');
-        } else {
-          console.log('⚠️ Unexpected response format - no member field found');
-          console.log('Response:', response);
-        }
+      } else if (response && response['hydra:member']) {
+        // Hydra format (fallback)
+        childrenArray = response['hydra:member'];
       } else {
-        console.log('⚠️ Unexpected response type:', typeof response);
+        childrenArray = [];
       }
 
       // Filter and map valid children
@@ -85,12 +70,6 @@ class ChildrenService {
         .filter((child: any) => child && typeof child === 'object' && !Array.isArray(child))
         .map((child: Child) => this.mapChildData(child));
     } catch (error: any) {
-      console.error('❌ Children fetch error details:', {
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        endpoint: API_ENDPOINTS.CHILDREN.LIST
-      });
       return [];
     }
   }
@@ -99,11 +78,9 @@ class ChildrenService {
     try {
       const token = await this.getAuthToken();
       if (!token) {
-        console.warn('⚠️ No token found for child fetch');
         return null;
       }
 
-      console.log(`🔍 Fetching child ${childId} with API Platform endpoint...`);
       
       const response = await apiClient.get<Child>(
         API_ENDPOINTS.CHILDREN.GET(childId),
@@ -116,14 +93,9 @@ class ChildrenService {
         }
       );
       
-      console.log(`Child ${childId} API response:`, {
-        id: response.id,
-        hasData: !!response
-      });
 
       return response ? this.mapChildData(response) : null;
     } catch (error: any) {
-      console.error('Error fetching child by ID:', error);
       if (error.response?.status === 404) {
         return null;
       }
@@ -135,11 +107,9 @@ class ChildrenService {
     try {
       const token = await this.getAuthToken();
       if (!token) {
-        console.warn('⚠️ No token found for child statistics');
         return null;
       }
 
-      console.log(`🔍 Fetching child ${childId} statistics with API Platform...`);
 
       const response = await apiClient.get<ChildStatistics>(
         API_ENDPOINTS.CHILDREN.STATISTICS(childId),
@@ -152,10 +122,6 @@ class ChildrenService {
         }
       );
       
-      console.log(`Child ${childId} statistics response:`, {
-        totalPoints: response.totalPoints,
-        hasData: !!response
-      });
 
       return response ? {
         totalPoints: response.totalPoints || 0,
@@ -169,7 +135,6 @@ class ChildrenService {
         weeklyProgress: response.weeklyProgress || []
       } : null;
     } catch (error: any) {
-      console.error('Error fetching child statistics:', error);
       if (error.response?.status === 404) {
         return null;
       }
@@ -181,11 +146,9 @@ class ChildrenService {
     try {
       const token = await this.getAuthToken();
       if (!token) {
-        console.warn('⚠️ No token found for child activity');
         return [];
       }
 
-      console.log(`🔍 Fetching child ${childId} activity with API Platform...`);
 
       const response = await apiClient.get<{ 'hydra:member': any[] }>(
         `${API_ENDPOINTS.CHILDREN.ACTIVITIES(childId)}?limit=${limit}`,
@@ -198,10 +161,6 @@ class ChildrenService {
         }
       );
       
-      console.log(`Child ${childId} activity response:`, {
-        memberCount: response['hydra:member']?.length,
-        hasData: !!response
-      });
 
       const activitiesArray = response['hydra:member'] || [];
 
@@ -218,7 +177,6 @@ class ChildrenService {
           color: this.getActivityColor(activity.type)
         }));
     } catch (error: any) {
-      console.error('Error fetching child activity:', error);
       return [];
     }
   }
@@ -227,11 +185,9 @@ class ChildrenService {
     try {
       const token = await this.getAuthToken();
       if (!token) {
-        console.warn('⚠️ No token found for child badges');
         return [];
       }
 
-      console.log(`🔍 Fetching child ${childId} badges with API Platform...`);
 
       const response = await apiClient.get<{ 'hydra:member': any[] }>(
         API_ENDPOINTS.CHILDREN.BADGES(childId),
@@ -244,10 +200,6 @@ class ChildrenService {
         }
       );
       
-      console.log(`Child ${childId} badges response:`, {
-        memberCount: response['hydra:member']?.length,
-        hasData: !!response
-      });
 
       const badgesArray = response['hydra:member'] || [];
 
@@ -268,7 +220,6 @@ class ChildrenService {
           earnedAt: badge.earnedAt || badge.created_at || new Date().toISOString()
         } as Badge & { earnedAt: string }));
     } catch (error: any) {
-      console.error('Error fetching child badges:', error);
       return [];
     }
   }
@@ -280,32 +231,39 @@ class ChildrenService {
         throw new Error('No authentication token');
       }
 
-      console.log('🔍 Creating child with API Platform...', {
-        name: childData.name,
-        firstName: childData.firstName,
-        endpoint: API_ENDPOINTS.CHILDREN.CREATE
-      });
+      // Get the current user to get the parent ID
+      const currentUser = await authService.getCurrentUser();
+      if (!currentUser) {
+        throw new Error('No user logged in');
+      }
 
-      const response = await apiClient.post<Child>(
+      // Add the user_id to the child data
+      const dataWithUserId = {
+        ...childData,
+        user_id: currentUser.id, // Add the parent's user ID
+      };
+
+      const response = await apiClient.post<any>(
         API_ENDPOINTS.CHILDREN.CREATE,
-        childData,
+        dataWithUserId,
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/ld+json',
+            'Content-Type': 'application/json',
           },
         }
       );
 
-      console.log('Child creation response:', {
-        id: response.id,
-        name: response.name,
-        hasData: !!response
-      });
-
-      return response ? this.mapChildData(response) : null;
+      // Handle standardized response format
+      if (response && response.success && response.data) {
+        return this.mapChildData(response.data);
+      } else if (response && response.id) {
+        // Direct response format
+        return this.mapChildData(response);
+      } else {
+        throw new Error('Invalid response format');
+      }
     } catch (error: any) {
-      console.error('Error creating child:', error);
       throw new Error(error.response?.data?.message || error.response?.data?.detail || error.message || 'Failed to create child');
     }
   }
@@ -317,10 +275,6 @@ class ChildrenService {
         throw new Error('No authentication token');
       }
 
-      console.log(`🔍 Updating child ${childId} with API Platform...`, {
-        updates,
-        endpoint: API_ENDPOINTS.CHILDREN.UPDATE(childId)
-      });
 
       const response = await apiClient.put<Child>(
         API_ENDPOINTS.CHILDREN.UPDATE(childId),
@@ -333,15 +287,9 @@ class ChildrenService {
         }
       );
 
-      console.log(`Child ${childId} update response:`, {
-        id: response.id,
-        name: response.name,
-        hasData: !!response
-      });
 
       return response ? this.mapChildData(response) : null;
     } catch (error: any) {
-      console.error('Error updating child:', error);
       throw new Error(error.response?.data?.message || error.response?.data?.detail || error.message || 'Failed to update child');
     }
   }
@@ -353,7 +301,6 @@ class ChildrenService {
         throw new Error('No authentication token');
       }
 
-      console.log(`🔍 Deleting child ${childId} with API Platform...`);
 
       await apiClient.delete(API_ENDPOINTS.CHILDREN.DELETE(childId), {
         headers: {
@@ -361,10 +308,8 @@ class ChildrenService {
         },
       });
 
-      console.log(`Child ${childId} deleted successfully`);
       return true;
     } catch (error: any) {
-      console.error('Error deleting child:', error);
       throw new Error(error.response?.data?.message || error.response?.data?.detail || error.message || 'Failed to delete child');
     }
   }
@@ -376,7 +321,6 @@ class ChildrenService {
         throw new Error('No authentication token');
       }
 
-      console.log(`🔍 Adding ${points} points to child ${childId}...`, { reason });
 
       await apiClient.post(
         API_ENDPOINTS.CHILDREN.ADD_POINTS(childId),
@@ -392,10 +336,8 @@ class ChildrenService {
         }
       );
 
-      console.log(`Successfully added ${points} points to child ${childId}`);
       return true;
     } catch (error: any) {
-      console.error('Error adding points to child:', error);
       throw new Error(error.response?.data?.message || error.response?.data?.detail || error.message || 'Failed to add points to child');
     }
   }
@@ -430,7 +372,6 @@ class ChildrenService {
   }
 
   private mapChildData(data: any): Child {
-    console.log('🔍 Mapping child data:', data);
     
     // Calculer l'âge si birthDate est fourni, sinon utiliser l'âge existant
     let age = data.age || 0;
@@ -475,12 +416,6 @@ class ChildrenService {
       updatedAt: data.updatedAt || data.updated_at
     };
     
-    console.log('✅ Mapped child:', { 
-      id: mappedChild.id, 
-      name: mappedChild.name, 
-      age: mappedChild.age, 
-      ageGroup: mappedChild.ageGroup 
-    });
     return mappedChild;
   }
 

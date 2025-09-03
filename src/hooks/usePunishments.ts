@@ -52,7 +52,6 @@ export const usePunishments = () => {
   // Fetch punishments on mount if empty
   useEffect(() => {
     if (punishments.length === 0 && !isLoading) {
-      console.log('⚠️ usePunishments: Fetching punishments on mount...');
       dispatch(fetchPunishmentsAsync());
     }
   }, []);

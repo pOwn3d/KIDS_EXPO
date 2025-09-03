@@ -59,33 +59,27 @@ class RewardsService {
         url += `?${params.toString()}`;
       }
 
-      const response = await apiClient.get<RewardsCollectionResponse>(url, {}, {
+      const response = await apiClient.get<any>(url, {}, {
         headers: {
           Authorization: `Bearer ${token}`,
-          Accept: 'application/ld+json',
+          Accept: 'application/json',
         },
       });
 
-      // Handle both direct array and hydra format
+      // Handle the standardized API response format
       let rewardsArray: any[] = [];
       
-      if (Array.isArray(response)) {
-        // Direct array format (current API)
+      if (response && response.success && response.data) {
+        // Standardized response format from backend
+        rewardsArray = Array.isArray(response.data) ? response.data : [];
+      } else if (Array.isArray(response)) {
+        // Direct array format (fallback)
         rewardsArray = response;
-        console.log('✅ Rewards API response (direct array):', rewardsArray.length, 'rewards');
       } else if (response['hydra:member']) {
-        // Hydra format
+        // Hydra format (fallback)
         rewardsArray = response['hydra:member'];
-        console.log('✅ Rewards API response (hydra):', rewardsArray.length, 'rewards');
       } else {
-        console.log('⚠️ Unexpected rewards response format:', response);
-        // Si la réponse a une structure d'objet avec des données, essayer de les récupérer
-        if (response && typeof response === 'object') {
-          if (response.member) {
-            rewardsArray = response.member;
-            console.log('✅ Rewards API response (totalItems/member):', rewardsArray.length, 'rewards');
-          }
-        }
+        rewardsArray = [];
       }
       
       return rewardsArray.map((reward: any) => ({
@@ -109,7 +103,6 @@ class RewardsService {
         updatedAt: reward.updatedAt,
       }));
     } catch (error: any) {
-      console.error('Failed to fetch rewards:', error);
       throw new Error(error.response?.data?.message || error.message || 'Failed to fetch rewards');
     }
   }
@@ -147,7 +140,6 @@ class RewardsService {
 
       return response;
     } catch (error: any) {
-      console.error('Failed to fetch reward by ID:', error);
       if (error.response?.status === 404) {
         return null;
       }
@@ -176,12 +168,6 @@ class RewardsService {
         }
       );
 
-      console.log('Reward claims API response:', {
-        totalItems: response['hydra:totalItems'],
-        memberCount: response['hydra:member']?.length,
-        context: response['@context']
-      });
-
       // API Platform retourne toujours 'hydra:member'
       const claimsArray = response['hydra:member'] || [];
       
@@ -201,10 +187,8 @@ class RewardsService {
         notes: claim.notes,
       }));
     } catch (error: any) {
-      console.error('Failed to fetch reward claims:', error);
       
       // En cas d'échec complet, retourner un tableau vide au lieu de faire échouer l'app
-      console.log('Returning empty claims array as fallback');
       return [];
     }
   }
@@ -219,11 +203,6 @@ class RewardsService {
         throw new Error('No authentication token');
       }
 
-      console.log('🎁 Claiming reward:', {
-        rewardId,
-        childId,
-        endpoint: API_ENDPOINTS.REWARDS.CLAIMS.CREATE
-      });
 
       const claimData: ClaimRewardRequest = {
         reward: `/api/rewards/${rewardId}`, // IRI reference
@@ -241,19 +220,9 @@ class RewardsService {
         }
       );
 
-      console.log('🎁 Claim response:', {
-        id: response.id,
-        status: response.status
-      });
 
       return response;
     } catch (error: any) {
-      console.error('🚨 Claim reward error details:', {
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        endpoint: API_ENDPOINTS.REWARDS.CLAIMS.CREATE
-      });
       
       throw new Error(error.response?.data?.message || error.response?.data?.detail || error.message || 'Failed to claim reward');
     }
@@ -282,7 +251,6 @@ class RewardsService {
 
       return response;
     } catch (error: any) {
-      console.error('Failed to validate reward claim:', error);
       throw new Error(error.response?.data?.message || error.message || 'Failed to validate reward claim');
     }
   }
@@ -313,7 +281,6 @@ class RewardsService {
 
       return response;
     } catch (error: any) {
-      console.error('Failed to reject reward claim:', error);
       throw new Error(error.response?.data?.message || error.message || 'Failed to reject reward claim');
     }
   }
@@ -328,20 +295,42 @@ class RewardsService {
         throw new Error('No authentication token');
       }
 
-      const response = await apiClient.post<Reward>(
+      // Prepare data with correct field names for backend
+      const apiData = {
+        name: rewardData.name,
+        description: rewardData.description,
+        pointsCost: rewardData.pointsCost || rewardData.points_cost,
+        type: rewardData.type || 'individual', // Backend only accepts 'individual' or 'collective'
+        icon: rewardData.icon || '🎁',
+        isActive: rewardData.isActive !== false,
+        maxClaimsPerWeek: rewardData.maxClaimsPerWeek || 5,
+      };
+
+
+      const response = await apiClient.post<any>(
         API_ENDPOINTS.REWARDS.CREATE,
-        rewardData,
+        apiData,
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/ld+json',
+            'Content-Type': 'application/json',
           },
         }
       );
 
-      return response;
+      // Handle standardized response format
+      if (response && response.success && response.data) {
+        return response.data;
+      } else if (response && response.id) {
+        // Direct response format from API Platform (201 Created)
+        return response;
+      } else if (response) {
+        // Fallback: any valid response object
+        return response;
+      } else {
+        throw new Error('Invalid response format');
+      }
     } catch (error: any) {
-      console.error('Failed to create reward:', error);
       throw new Error(error.response?.data?.message || error.message || 'Failed to create reward');
     }
   }
@@ -364,7 +353,6 @@ class RewardsService {
 
       return true;
     } catch (error: any) {
-      console.error('Failed to delete reward:', error);
       throw new Error(error.response?.data?.message || error.message || 'Failed to delete reward');
     }
   }
@@ -392,7 +380,6 @@ class RewardsService {
 
       return response;
     } catch (error: any) {
-      console.error('Failed to update reward:', error);
       throw new Error(error.response?.data?.message || error.message || 'Failed to update reward');
     }
   }
@@ -424,13 +411,11 @@ class RewardsService {
           const rewards = await this.getAllRewards({ category, available: true });
           allRewards.push(...rewards);
         } catch (error) {
-          console.warn(`Failed to fetch rewards for category ${category}:`, error);
         }
       }
 
       return allRewards;
     } catch (error: any) {
-      console.error('Failed to fetch reward recommendations:', error);
       throw new Error(error.response?.data?.message || error.message || 'Failed to fetch reward recommendations');
     }
   }
@@ -454,7 +439,6 @@ class RewardsService {
 
       return uniqueRewards.filter(reward => reward.available);
     } catch (error: any) {
-      console.error('Failed to fetch child reward recommendations:', error);
       throw new Error(error.response?.data?.message || error.message || 'Failed to fetch child reward recommendations');
     }
   }

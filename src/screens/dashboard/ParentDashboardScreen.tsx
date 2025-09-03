@@ -587,6 +587,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     paddingHorizontal: 12,
     justifyContent: 'space-between',
+    gap: 10,
   },
   quickAction: {
     width: '48%',

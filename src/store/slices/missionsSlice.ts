@@ -268,6 +268,20 @@ const missionsSlice = createSlice({
       state.filters = {};
     },
     
+    // Mettre à jour la liste des missions
+    setMissions: (state, action: PayloadAction<Mission[]>) => {
+      state.missions = action.payload;
+      state.lastSyncAt = Date.now();
+      
+      // Séparer les missions actives et terminées
+      state.activeMissions = action.payload.filter(m => 
+        m.status === 'pending' || m.status === 'in_progress' || m.status === 'active'
+      );
+      state.completedMissions = action.payload.filter(m => 
+        m.status === 'completed' || m.status === 'validated'
+      );
+    },
+    
     // Optimistic update pour la completion d'une mission
     completeMissionOptimistic: (state, action: PayloadAction<{
       missionId: number;
@@ -512,6 +526,7 @@ export const {
   clearError,
   setFilters,
   clearFilters,
+  setMissions,
   completeMissionOptimistic,
   resetMissionsState,
 } = missionsSlice.actions;

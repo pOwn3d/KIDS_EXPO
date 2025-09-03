@@ -3,7 +3,6 @@ import { device, cleanup } from 'detox';
 
 // Configuration globale pour les tests E2E
 beforeAll(async () => {
-  console.log('🚀 Initializing Detox E2E tests...');
   
   // Attendre que l'application soit prête
   await device.launchApp({
@@ -17,7 +16,6 @@ beforeAll(async () => {
     },
   });
 
-  console.log('✅ Application launched successfully');
 });
 
 beforeEach(async () => {
@@ -35,7 +33,6 @@ beforeEach(async () => {
 });
 
 afterAll(async () => {
-  console.log('🧹 Cleaning up after tests...');
   await cleanup();
 });
 
@@ -70,7 +67,6 @@ export const TestHelpers = {
         .not.toBeVisible()
         .withTimeout(15000);
     } catch (error) {
-      console.warn('App loading indicator not found, proceeding...');
     }
   },
 

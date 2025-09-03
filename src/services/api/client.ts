@@ -66,7 +66,6 @@ export class ApiClient {
     try {
       return await AsyncStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
     } catch (error) {
-      this.log('Error getting access token:', error);
       return null;
     }
   }
@@ -78,7 +77,6 @@ export class ApiClient {
     try {
       return await AsyncStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
     } catch (error) {
-      this.log('Error getting refresh token:', error);
       return null;
     }
   }
@@ -91,11 +89,8 @@ export class ApiClient {
       // Try to store tokens individually for better error handling
       await AsyncStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
       await AsyncStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
-      this.log('Tokens stored successfully');
     } catch (error) {
-      this.log('Error storing tokens:', error);
       // Don't throw error, just log it - tokens will be kept in memory
-      console.warn('Failed to persist tokens to storage, using in-memory only');
     }
   }
 
@@ -110,7 +105,6 @@ export class ApiClient {
         STORAGE_KEYS.USER_DATA,
       ]);
     } catch (error) {
-      this.log('Error clearing tokens:', error);
     }
   }
 
@@ -122,7 +116,6 @@ export class ApiClient {
       const netInfo = await NetInfo.fetch();
       return netInfo.isConnected === true;
     } catch (error) {
-      this.log('Error checking network status:', error);
       return false;
     }
   }
@@ -131,9 +124,7 @@ export class ApiClient {
    * Logging utility
    */
   private log(...args: any[]): void {
-    if (this.config.enableLogging) {
-      console.log('[ApiClient]', ...args);
-    }
+    // Logging disabled
   }
 
   /**
@@ -192,7 +183,6 @@ export class ApiClient {
 
       return true;
     } catch (error) {
-      this.log('Token refresh failed:', error);
       
       // Process failed queue with errors
       this.failedQueue.forEach(({ reject }) => reject(error));
@@ -262,7 +252,6 @@ export class ApiClient {
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        this.log(`Request attempt ${attempt}/${maxRetries}:`, init.method || 'GET', fullUrl);
 
         const response = await fetch(fullUrl, {
           ...init,
@@ -272,8 +261,8 @@ export class ApiClient {
 
         clearTimeout(timeoutId);
 
-        // Handle successful responses
-        if (response.ok) {
+        // Handle successful responses (2xx status codes)
+        if (response.ok || (response.status >= 200 && response.status < 300)) {
           const contentType = response.headers.get('content-type');
           if (contentType?.includes('application/json') || contentType?.includes('application/ld+json')) {
             return await response.json();
@@ -289,7 +278,6 @@ export class ApiClient {
 
         // Handle authentication errors
         if (response.status === 401 && !skipAuth) {
-          this.log('Token expired, attempting refresh...');
           const refreshed = await this.refreshTokens();
           if (refreshed) {
             // Retry the request with new token
@@ -326,7 +314,6 @@ export class ApiClient {
         // Wait before retry
         if (attempt < maxRetries) {
           const delay = this.config.retryDelay * Math.pow(2, attempt - 1); // Exponential backoff
-          this.log(`Retrying in ${delay}ms...`);
           await this.sleep(delay);
         }
       }

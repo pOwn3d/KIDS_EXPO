@@ -68,11 +68,9 @@ export const useRewards = () => {
   // Fetch rewards and claims on mount if empty
   useEffect(() => {
     if (rewards.length === 0 && !isLoading) {
-      console.log('🎁 useRewards: Fetching rewards on mount...');
       dispatch(fetchRewardsAsync());
     }
     if (claims.length === 0 && !isLoading) {
-      console.log('📝 useRewards: Fetching reward claims on mount...');
       dispatch(fetchRewardClaimsAsync());
     }
   }, []);

@@ -12,10 +12,14 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../hooks/useSimpleTheme';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect, CommonActions } from '@react-navigation/native';
 import { missionsService } from '../../services/missions.service';
 import { childrenService, type Child } from '../../services/children.service';
 import { AppSpacing, CommonStyles } from '../../constants/spacing';
+import { useDispatch } from 'react-redux';
+import { fetchMissionsAsync } from '../../store/slices/missionsSlice';
+import { AppDispatch } from '../../store/store';
+import { Toast, useToast } from '../../components/ui/Toast';
 
 interface MissionFormData {
   name: string;
@@ -30,6 +34,8 @@ interface MissionFormData {
 const CreateMissionScreen: React.FC = () => {
   const theme = useTheme();
   const navigation = useNavigation();
+  const dispatch = useDispatch<AppDispatch>();
+  const { toast, showToast, hideToast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [children, setChildren] = useState<Child[]>([]);
   const [formData, setFormData] = useState<MissionFormData>({
@@ -72,35 +78,52 @@ const CreateMissionScreen: React.FC = () => {
     }
   };
 
+  const handleGoBack = () => {
+    if (Platform.OS === 'web') {
+      // Sur le web, naviguer explicitement vers la liste des missions
+      navigation.navigate('MissionsList' as any);
+    } else {
+      navigation.goBack();
+    }
+  };
+
   const handleSubmit = async () => {
+    console.log('🎯 handleSubmit appelé, formData:', formData);
+    
     // Validation
     if (!formData.name.trim()) {
+      console.log('❌ Validation échouée: nom manquant');
       Alert.alert('Erreur', 'Veuillez saisir un nom pour la mission');
       return;
     }
 
     if (!formData.description.trim()) {
+      console.log('❌ Validation échouée: description manquante');
       Alert.alert('Erreur', 'Veuillez saisir une description');
       return;
     }
 
     const points = parseInt(formData.points);
     if (isNaN(points) || points <= 0) {
+      console.log('❌ Validation échouée: points invalides', { points: formData.points, parsed: points });
       Alert.alert('Erreur', 'Veuillez saisir un nombre de points valide');
       return;
     }
 
     if (formData.assignedTo.length === 0) {
+      console.log('❌ Validation échouée: aucun enfant assigné', { assignedTo: formData.assignedTo });
       Alert.alert('Erreur', 'Veuillez sélectionner au moins un enfant');
       return;
     }
+
+    console.log('✅ Toutes les validations passées, création en cours...');
 
     setIsLoading(true);
 
     try {
       console.log('🎯 Création de mission:', formData);
       
-      await missionsService.createMission({
+      const newMission = await missionsService.createMission({
         name: formData.name.trim(),
         description: formData.description.trim(),
         points: points,
@@ -110,23 +133,41 @@ const CreateMissionScreen: React.FC = () => {
         dueDate: formData.dueDate,
       });
 
-      Alert.alert(
-        'Succès',
-        'Mission créée avec succès !',
-        [
-          {
-            text: 'OK',
-            onPress: () => navigation.goBack(),
-          },
-        ]
-      );
+      console.log('✅ Mission créée dans CreateMissionScreen:', newMission);
+
+      // Rafraîchir la liste des missions dans Redux
+      dispatch(fetchMissionsAsync());
+
+      // Afficher le toast de succès
+      if (Platform.OS === 'web') {
+        showToast('Mission créée avec succès !', 'success');
+        setTimeout(() => {
+          // Naviguer explicitement vers la liste sur le web
+          navigation.navigate('MissionsList' as any);
+        }, 1500);
+      } else {
+        Alert.alert(
+          'Succès',
+          'Mission créée avec succès !',
+          [
+            {
+              text: 'OK',
+              onPress: () => navigation.goBack(),
+            },
+          ]
+        );
+      }
     } catch (error: any) {
-      console.error('❌ Erreur création mission:', error);
-      Alert.alert(
-        'Erreur',
-        'Impossible de créer la mission. Veuillez réessayer.',
-        [{ text: 'OK' }]
-      );
+      console.error('❌ Erreur dans CreateMissionScreen:', error);
+      if (Platform.OS === 'web') {
+        showToast('Impossible de créer la mission. Veuillez réessayer.', 'error');
+      } else {
+        Alert.alert(
+          'Erreur',
+          'Impossible de créer la mission. Veuillez réessayer.',
+          [{ text: 'OK' }]
+        );
+      }
     } finally {
       setIsLoading(false);
     }
@@ -264,7 +305,7 @@ const CreateMissionScreen: React.FC = () => {
       <View style={[styles.header, { backgroundColor: theme.colors.surface }]}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => navigation.goBack()}
+          onPress={handleGoBack}
         >
           <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
         </TouchableOpacity>
@@ -365,6 +406,15 @@ const CreateMissionScreen: React.FC = () => {
 
         <View style={styles.bottomPadding} />
       </ScrollView>
+      
+      {/* Toast pour les messages */}
+      {toast && toast.visible && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onHide={hideToast}
+        />
+      )}
     </SafeAreaView>
   );
 };

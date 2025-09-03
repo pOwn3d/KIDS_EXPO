@@ -18,7 +18,6 @@ class ActivitiesService {
    */
   async getActivities(filters?: ActivityFilters): Promise<ActivitiesCollectionResponse> {
     try {
-      console.log('📊 Fetching activities...');
       
       const params = new URLSearchParams();
       if (filters?.child) params.append('child', filters.child.toString());
@@ -32,10 +31,8 @@ class ActivitiesService {
 
       const response = await apiClient.get<ActivitiesCollectionResponse>(url);
       
-      console.log('✅ Activities loaded:', response);
       return response;
     } catch (error) {
-      console.error('❌ Error fetching activities:', error);
       throw error;
     }
   }
@@ -45,16 +42,13 @@ class ActivitiesService {
    */
   async getRecentActivities(limit: number = 10): Promise<RecentActivitiesResponse> {
     try {
-      console.log('📊 Fetching recent activities...');
       
       const response = await apiClient.get<RecentActivitiesResponse>(
         `${API_ENDPOINTS.ACTIVITIES.RECENT}?limit=${limit}`
       );
       
-      console.log('✅ Recent activities loaded:', response);
       return response;
     } catch (error) {
-      console.error('❌ Error fetching recent activities:', error);
       throw error;
     }
   }
@@ -71,16 +65,13 @@ class ActivitiesService {
    */
   async getActivity(activityId: number): Promise<Activity> {
     try {
-      console.log(`📊 Fetching activity ${activityId}...`);
       
       const response = await apiClient.get<Activity>(
         API_ENDPOINTS.ACTIVITIES.GET(activityId)
       );
       
-      console.log('✅ Activity loaded:', response);
       return response;
     } catch (error) {
-      console.error(`❌ Error fetching activity ${activityId}:`, error);
       throw error;
     }
   }

@@ -15,6 +15,7 @@ import { useTheme } from '../../hooks/useSimpleTheme';
 import { useNavigation } from '@react-navigation/native';
 import { rewardsService } from '../../services/rewards.service';
 import { AppSpacing, CommonStyles } from '../../constants/spacing';
+import { Toast, useToast } from '../../components/ui/Toast';
 
 interface RewardFormData {
   name: string;
@@ -29,6 +30,7 @@ const CreateRewardScreen: React.FC = () => {
   const theme = useTheme();
   const navigation = useNavigation();
   const [isLoading, setIsLoading] = useState(false);
+  const { toast, showToast, hideToast } = useToast();
   const [formData, setFormData] = useState<RewardFormData>({
     name: '',
     description: '',
@@ -71,25 +73,25 @@ const CreateRewardScreen: React.FC = () => {
     try {
       console.log('🎁 Création de récompense:', formData);
       
-      await rewardsService.createReward({
+      const result = await rewardsService.createReward({
         name: formData.name.trim(),
         description: formData.description.trim(),
         pointsCost: points,
-        category: formData.category,
-        quantity: formData.quantity ? parseInt(formData.quantity) : undefined,
-        expirationDate: formData.expirationDate,
+        type: 'individual',  // Backend only accepts 'individual' or 'collective'
+        icon: '🎁', // Default icon
+        isActive: true,
+        maxClaimsPerWeek: 5, // Default value
       });
 
-      Alert.alert(
-        'Succès',
-        'Récompense créée avec succès !',
-        [
-          {
-            text: 'OK',
-            onPress: () => navigation.goBack(),
-          },
-        ]
-      );
+      console.log('✅ Récompense créée avec succès:', result);
+
+      // Afficher le toast de succès
+      showToast('Récompense créée avec succès !', 'success');
+      
+      // Naviguer vers la liste après un délai pour voir le toast
+      setTimeout(() => {
+        navigation.goBack();
+      }, 1500);
     } catch (error: any) {
       console.error('❌ Erreur création récompense:', error);
       Alert.alert(
@@ -265,6 +267,15 @@ const CreateRewardScreen: React.FC = () => {
 
         <View style={styles.bottomPadding} />
       </ScrollView>
+
+      {/* Toast */}
+      {toast?.visible && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onHide={hideToast}
+        />
+      )}
     </SafeAreaView>
   );
 };

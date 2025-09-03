@@ -56,56 +56,27 @@ class MissionsService {
         url += `?${params.toString()}`;
       }
 
-      const response = await apiClient.get<MissionsCollectionResponse>(url, {}, {
+      const response = await apiClient.get<any>(url, {}, {
         headers: {
           Authorization: `Bearer ${token}`,
-          Accept: 'application/ld+json',
+          Accept: 'application/json',
         },
       });
-      
-      console.log('Missions raw response type:', typeof response);
-      console.log('Missions raw response:', response);
 
-      // Handle both direct array and hydra format
+      // Handle the standardized API response format
       let missionsArray: any[] = [];
       
-      if (Array.isArray(response)) {
-        // Direct array format
+      if (response && response.success && response.data) {
+        // Standardized response format from backend
+        missionsArray = Array.isArray(response.data) ? response.data : [];
+      } else if (Array.isArray(response)) {
+        // Direct array format (fallback)
         missionsArray = response;
-        console.log('✅ Missions API response (direct array):', missionsArray.length, 'missions');
-      } else if (response && typeof response === 'object') {
-        // Check for different object formats
-        if (response['hydra:member']) {
-          // Hydra format
-          missionsArray = response['hydra:member'];
-          console.log('✅ Missions API response (hydra:member):', missionsArray.length, 'missions');
-        } else if (response.member) {
-          // API Platform format
-          missionsArray = response.member;
-          console.log('✅ Missions API response (member):', missionsArray.length, 'missions');
-        } else {
-          console.log('⚠️ Unexpected missions response format - no member field found');
-        }
+      } else if (response && response['hydra:member']) {
+        // Hydra format (fallback)
+        missionsArray = response['hydra:member'];
       } else {
-        console.log('⚠️ Unexpected missions response format - not array or object');
-        console.log('Response type:', typeof response);
-        console.log('Response value:', response);
-        // Try to parse if it's a string
-        if (typeof response === 'string') {
-          try {
-            const parsed = JSON.parse(response);
-            console.log('Parsed missions response:', parsed);
-            if (parsed.member) {
-              missionsArray = parsed.member;
-              console.log('✅ Missions from parsed string:', missionsArray.length, 'missions');
-            } else if (parsed['hydra:member']) {
-              missionsArray = parsed['hydra:member'];
-              console.log('✅ Missions from parsed hydra string:', missionsArray.length, 'missions');
-            }
-          } catch (e) {
-            console.error('Failed to parse string response:', e);
-          }
-        }
+        missionsArray = [];
       }
       
       return missionsArray.map((mission: any) => ({
@@ -113,7 +84,7 @@ class MissionsService {
         // Map API Platform fields to our model
         id: mission.id,
         title: mission.name || mission.title || 'Mission',
-        name: mission.name || mission.title,
+        name: mission.name || mission.title || 'Mission',
         description: mission.description || '',
         points: mission.pointsReward || mission.points || 0,
         pointsReward: mission.pointsReward || mission.points || 0,
@@ -124,6 +95,7 @@ class MissionsService {
         icon: mission.icon || '🎯',
         targetDays: mission.targetDays || 1,
         requiredCompletions: mission.requiredCompletions || 1,
+        type: mission.type || 'once',  // Ajouter le type pour MissionsListScreen
         child: mission.child,
         childName: mission.childName,
         dueDate: mission.dueDate,
@@ -132,7 +104,6 @@ class MissionsService {
         validatedAt: mission.validatedAt,
       }));
     } catch (error: any) {
-      console.error('Failed to fetch missions:', error);
       throw new Error(error.response?.data?.message || error.message || 'Failed to fetch missions');
     }
   }
@@ -164,7 +135,6 @@ class MissionsService {
 
       return response;
     } catch (error: any) {
-      console.error('Failed to fetch mission by ID:', error);
       if (error.response?.status === 404) {
         return null;
       }
@@ -182,21 +152,38 @@ class MissionsService {
         throw new Error('No authentication token');
       }
 
-      // Adapter les données pour l'API
-      const apiData = {
-        title: missionData.title || missionData.name,
+
+      // Préparer les données de base
+      const pointsValue = parseInt(missionData.points);
+      if (isNaN(pointsValue) || pointsValue <= 0) {
+        throw new Error(`Points invalides: ${missionData.points}`);
+      }
+
+      const apiData: any = {
+        name: missionData.name || missionData.title,  // L'API attend "name", pas "title"
         description: missionData.description,
-        points: missionData.points,
-        category: missionData.category,
+        pointsReward: pointsValue,  // Essayons en camelCase
+        points_reward: pointsValue,  // Et en snake_case pour être sûr
+        category: missionData.category || 'general',
         difficulty: missionData.difficulty || 'easy',
-        child: missionData.child || (missionData.assignedTo && missionData.assignedTo[0] ? `/api/children/${missionData.assignedTo[0]}` : undefined),
-        dueDate: missionData.dueDate,
-        type: missionData.type,
+        type: missionData.type || 'daily',
+        status: 'pending',
+        isActive: true
       };
 
-      console.log('📤 Données envoyées à l\'API:', apiData);
+      // Ajouter l'enfant assigné si disponible (requis par l'API)
+      if (!missionData.assignedTo || !missionData.assignedTo[0]) {
+        throw new Error('Un enfant doit être assigné à la mission');
+      }
+      apiData.child = `/api/children/${missionData.assignedTo[0]}`;
 
-      const response = await apiClient.post<Mission>(
+      // Ajouter la date d'échéance si disponible
+      if (missionData.dueDate) {
+        apiData.dueDate = missionData.dueDate;
+      }
+
+
+      const response = await apiClient.post<any>(
         API_ENDPOINTS.MISSIONS.CREATE,
         apiData,
         {
@@ -207,10 +194,32 @@ class MissionsService {
         }
       );
 
-      return response;
+      // Handle standardized response format
+      if (response && response.success && response.data) {
+        return response.data;
+      } else if (response && response.id) {
+        // Direct response format
+        return response;
+      } else {
+        throw new Error('Invalid response format');
+      }
     } catch (error: any) {
-      console.error('Failed to create mission:', error);
-      throw new Error(error.response?.data?.message || error.message || 'Failed to create mission');
+      
+      // Récupérer le message d'erreur de l'API
+      const apiError = error.response?.data;
+      let errorMessage = 'Failed to create mission';
+      
+      if (apiError) {
+        if (apiError['hydra:description']) {
+          errorMessage = apiError['hydra:description'];
+        } else if (apiError.message) {
+          errorMessage = apiError.message;
+        } else if (apiError.detail) {
+          errorMessage = apiError.detail;
+        }
+      }
+      
+      throw new Error(errorMessage);
     }
   }
 
@@ -237,7 +246,6 @@ class MissionsService {
 
       return response;
     } catch (error: any) {
-      console.error('Failed to update mission status:', error);
       throw new Error(error.response?.data?.message || error.message || 'Failed to update mission status');
     }
   }
@@ -250,7 +258,6 @@ class MissionsService {
       await this.updateMissionStatus(missionId, 'validated');
       return true;
     } catch (error) {
-      console.error('Failed to validate mission:', error);
       return false;
     }
   }
@@ -263,7 +270,6 @@ class MissionsService {
       await this.updateMissionStatus(missionId, 'rejected');
       return true;
     } catch (error) {
-      console.error('Failed to reject mission:', error);
       return false;
     }
   }
@@ -276,7 +282,6 @@ class MissionsService {
       await this.updateMissionStatus(missionId, 'completed');
       return true;
     } catch (error) {
-      console.error('Failed to complete mission:', error);
       return false;
     }
   }
@@ -299,7 +304,6 @@ class MissionsService {
 
       return true;
     } catch (error: any) {
-      console.error('Failed to delete mission:', error);
       throw new Error(error.response?.data?.message || error.message || 'Failed to delete mission');
     }
   }
@@ -327,7 +331,6 @@ class MissionsService {
 
       return response;
     } catch (error: any) {
-      console.error('Failed to update mission:', error);
       throw new Error(error.response?.data?.message || error.message || 'Failed to update mission');
     }
   }
@@ -360,13 +363,11 @@ class MissionsService {
           const missions = await this.getAllMissions({ category });
           allMissions.push(...missions);
         } catch (error) {
-          console.warn(`Failed to fetch missions for category ${category}:`, error);
         }
       }
 
       return allMissions;
     } catch (error: any) {
-      console.error('Failed to fetch mission recommendations:', error);
       throw new Error(error.response?.data?.message || error.message || 'Failed to fetch mission recommendations');
     }
   }
@@ -386,7 +387,6 @@ class MissionsService {
       const assignedMissionIds = new Set(childMissions.map(m => m.id));
       return recommendations.filter(mission => !assignedMissionIds.has(mission.id));
     } catch (error: any) {
-      console.error('Failed to fetch child mission recommendations:', error);
       throw new Error(error.response?.data?.message || error.message || 'Failed to fetch child mission recommendations');
     }
   }

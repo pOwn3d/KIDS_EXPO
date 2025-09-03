@@ -335,7 +335,7 @@ const ResponsiveMissionsScreen: React.FC = () => {
             padding: contentPadding,
             flexDirection: isTablet ? 'row' : 'column',
             flexWrap: isTablet ? 'wrap' : 'nowrap',
-            gap: isDesktop ? 20 : 16,
+            gap: 10,
           }
         ]}
         refreshControl={

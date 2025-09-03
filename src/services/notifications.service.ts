@@ -39,7 +39,6 @@ class NotificationsService {
       }
       return token;
     } catch (error) {
-      console.error('Erreur lors de la récupération du token:', error);
       return null;
     }
   }
@@ -62,7 +61,6 @@ class NotificationsService {
     try {
       const headers = await this.getAuthHeaders();
       
-      console.log('🔔 Récupération des notifications...');
       
       const response = await apiClient.get(
         `${API_URL}/api/notifications`,
@@ -76,7 +74,6 @@ class NotificationsService {
         }
       );
 
-      console.log('📊 Réponse notifications:', response.data);
 
       // Gérer différentes structures de réponse possibles
       let notifications = [];
@@ -93,7 +90,6 @@ class NotificationsService {
 
       return notifications.map((notif: any) => this.mapNotificationData(notif));
     } catch (error: any) {
-      console.error('❌ Erreur récupération notifications:', error);
       throw new Error(error.response?.data?.message || 'Erreur lors de la récupération des notifications');
     }
   }
@@ -127,7 +123,6 @@ class NotificationsService {
 
       return notifications.map((notif: any) => this.mapNotificationData(notif));
     } catch (error: any) {
-      console.error('Erreur récupération notifications non lues:', error);
       return [];
     }
   }
@@ -139,7 +134,6 @@ class NotificationsService {
     try {
       const headers = await this.getAuthHeaders();
       
-      console.log('✅ Marquage notification comme lue:', notificationId);
       
       const response = await apiClient.patch(
         `${API_URL}/api/notifications/${notificationId}`,
@@ -149,7 +143,6 @@ class NotificationsService {
 
       return response.status === 200 || response.status === 204;
     } catch (error: any) {
-      console.error('Erreur marquage notification:', error);
       return false;
     }
   }
@@ -177,7 +170,6 @@ class NotificationsService {
         return true;
       }
     } catch (error: any) {
-      console.error('Erreur marquage toutes notifications:', error);
       return false;
     }
   }
@@ -196,7 +188,6 @@ class NotificationsService {
 
       return response.status === 200 || response.status === 204;
     } catch (error: any) {
-      console.error('Erreur suppression notification:', error);
       return false;
     }
   }
@@ -223,7 +214,6 @@ class NotificationsService {
         return true;
       }
     } catch (error: any) {
-      console.error('Erreur suppression toutes notifications:', error);
       return false;
     }
   }
@@ -247,7 +237,6 @@ class NotificationsService {
 
       return stats;
     } catch (error) {
-      console.error('Erreur statistiques notifications:', error);
       return {
         total: 0,
         unread: 0,

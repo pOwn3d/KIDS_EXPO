@@ -37,7 +37,6 @@ export const useDashboard = () => {
     try {
       await Promise.allSettled(promises);
     } catch (error) {
-      console.error('Error refreshing dashboard:', error);
     }
   }, [fetchChildren, fetchMissions, fetchRewards, fetchPunishments]);
 
@@ -45,12 +44,12 @@ export const useDashboard = () => {
   const getParentDashboardData = useCallback(() => {
     if (!isParent) return null;
 
-    console.log('🔍 Dashboard - Building parent data:', {
+    const dashboardData = {
       childrenCount: children.length,
       children: children,
       missionStats: missionStats,
       rewardStats: rewardStats
-    });
+    };
 
     const activeChildren = children.filter(child => child.isActive !== false);
     
@@ -294,15 +293,6 @@ export const useDashboard = () => {
 
   const parentData = getParentDashboardData();
   const childData = getChildDashboardData();
-  
-  console.log('📦 useDashboard - Return values:', {
-    hasParentData: !!parentData,
-    hasChildData: !!childData,
-    childrenCount: children.length,
-    missionsCount: missions.length,
-    rewardsCount: rewards.length,
-    isParent: isParent
-  });
   
   return {
     // Core data

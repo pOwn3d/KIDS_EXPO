@@ -61,9 +61,12 @@ export interface CreateRewardRequest {
   name: string;
   description: string;
   pointsCost: number;
-  category: RewardCategory;
-  child?: string; // IRI reference for child-specific rewards
-  imageUrl?: string;
+  type: 'individual' | 'collective'; // Backend type field
+  icon?: string;
+  maxClaimsPerWeek?: number;
+  isActive?: boolean;
+  ageMin?: number;
+  ageMax?: number;
 }
 
 export interface UpdateRewardRequest extends Partial<CreateRewardRequest> {

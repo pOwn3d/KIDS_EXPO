@@ -18,6 +18,8 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { rewardsService, Reward, RewardClaim } from '../../services/rewards.service';
 import { childrenService } from '../../services/children.service';
 import WebScreenWrapper from '../../components/layout/WebScreenWrapper';
+import { useSelector } from 'react-redux';
+import { selectUserRole } from '../../store/store';
 
 interface RewardCardProps {
   reward: Reward;
@@ -468,6 +470,17 @@ const RewardsListScreen: React.FC = () => {
           ))
         )}
       </ScrollView>
+      
+      {/* Floating Action Button for Parents to Add New Reward */}
+      {userRole === 'PARENT' && (
+        <TouchableOpacity
+          style={[styles.floatingActionButton, { backgroundColor: theme.colors.primary }]}
+          onPress={handleCreateReward}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="add" size={28} color="#FFFFFF" />
+        </TouchableOpacity>
+      )}
       </SafeAreaView>
     </WebScreenWrapper>
   );
@@ -695,6 +708,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginTop: 16,
     textAlign: 'center',
+  },
+  floatingActionButton: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+    zIndex: 1000,
   },
 });
 

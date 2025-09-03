@@ -77,22 +77,17 @@ class PunishmentsService {
       if (Array.isArray(response)) {
         // Direct array format
         punishmentsArray = response;
-        console.log('✅ Punishments API response (direct array):', punishmentsArray.length, 'punishments');
       } else if (response['hydra:member']) {
         // Hydra format
         punishmentsArray = response['hydra:member'];
-        console.log('✅ Punishments API response (hydra):', punishmentsArray.length, 'punishments');
       } else if (response['member']) {
         // API Platform format
         punishmentsArray = response['member'];
-        console.log('✅ Punishments API response (member):', punishmentsArray.length, 'punishments');
       } else {
-        console.log('⚠️ Unexpected punishments response format:', response);
         // Si la réponse a une structure d'objet avec des données, essayer de les récupérer
         if (response && typeof response === 'object') {
           if (response.member) {
             punishmentsArray = response.member;
-            console.log('✅ Punishments API response (totalItems/member):', punishmentsArray.length, 'punishments');
           }
         }
       }
@@ -117,7 +112,6 @@ class PunishmentsService {
         updatedAt: punishment.updatedAt,
       }));
     } catch (error: any) {
-      console.error('Failed to fetch punishments:', error);
       throw new Error(error.response?.data?.message || error.message || 'Failed to fetch punishments');
     }
   }
@@ -141,7 +135,6 @@ class PunishmentsService {
 
       return response;
     } catch (error: any) {
-      console.error('Failed to fetch punishment by ID:', error);
       if (error.response?.status === 404) {
         return null;
       }
@@ -172,7 +165,6 @@ class PunishmentsService {
 
       return response;
     } catch (error: any) {
-      console.error('Failed to create punishment:', error);
       throw new Error(error.response?.data?.message || error.message || 'Failed to create punishment');
     }
   }
@@ -200,7 +192,6 @@ class PunishmentsService {
 
       return response;
     } catch (error: any) {
-      console.error('Failed to update punishment:', error);
       throw new Error(error.response?.data?.message || error.message || 'Failed to update punishment');
     }
   }
@@ -223,7 +214,6 @@ class PunishmentsService {
 
       return true;
     } catch (error: any) {
-      console.error('Failed to delete punishment:', error);
       throw new Error(error.response?.data?.message || error.message || 'Failed to delete punishment');
     }
   }
@@ -238,13 +228,6 @@ class PunishmentsService {
         throw new Error('No authentication token');
       }
 
-      console.log('⚠️ Applying punishment:', {
-        punishmentId,
-        childId,
-        reason,
-        duration,
-        endpoint: API_ENDPOINTS.PUNISHMENTS.APPLY(punishmentId)
-      });
 
       const applyData: ApplyPunishmentRequest = {
         punishment: `/api/punishments/${punishmentId}`, // IRI reference
@@ -264,19 +247,9 @@ class PunishmentsService {
         }
       );
 
-      console.log('⚠️ Punishment applied:', {
-        id: response.id,
-        isActive: response.isActive
-      });
 
       return response;
     } catch (error: any) {
-      console.error('🚨 Apply punishment error details:', {
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        endpoint: API_ENDPOINTS.PUNISHMENTS.APPLY(punishmentId)
-      });
       
       throw new Error(error.response?.data?.message || error.response?.data?.detail || error.message || 'Failed to apply punishment');
     }
@@ -303,11 +276,6 @@ class PunishmentsService {
         }
       );
 
-      console.log('Active punishments API response:', {
-        totalItems: response['hydra:totalItems'],
-        memberCount: response['hydra:member']?.length,
-        context: response['@context']
-      });
 
       // API Platform retourne toujours 'hydra:member'
       const appliedPunishmentsArray = response['hydra:member'] || [];
@@ -327,7 +295,6 @@ class PunishmentsService {
         appliedBy: appliedPunishment.appliedBy,
       }));
     } catch (error: any) {
-      console.error('Failed to fetch active punishments:', error);
       return [];
     }
   }
@@ -370,7 +337,6 @@ class PunishmentsService {
         appliedBy: appliedPunishment.appliedBy,
       }));
     } catch (error: any) {
-      console.error('Failed to fetch punishment history:', error);
       return [];
     }
   }
@@ -388,7 +354,6 @@ class PunishmentsService {
       }
 
       // Si aucune punition n'est trouvée dans l'API, utiliser les presets
-      console.log('No punishments found in API, using presets for age group:', ageGroup);
       
       const presets = PUNISHMENT_PRESETS[ageGroup] || [];
       
@@ -405,7 +370,6 @@ class PunishmentsService {
         isActive: true
       }));
     } catch (error: any) {
-      console.error('Failed to fetch punishment recommendations:', error);
       
       // Fallback vers les presets en cas d'erreur
       const presets = PUNISHMENT_PRESETS[ageGroup] || [];
@@ -436,7 +400,6 @@ class PunishmentsService {
       
       return recommendations;
     } catch (error: any) {
-      console.error('Failed to fetch child punishment recommendations:', error);
       throw new Error(error.response?.data?.message || error.message || 'Failed to fetch child punishment recommendations');
     }
   }
@@ -453,10 +416,8 @@ class PunishmentsService {
 
       // TODO: Implémenter l'endpoint pour désactiver une punition appliquée
       // Pour l'instant, ce serait probablement un PATCH sur l'AppliedPunishment
-      console.warn('Deactivate applied punishment not yet implemented');
       return false;
     } catch (error: any) {
-      console.error('Failed to deactivate applied punishment:', error);
       return false;
     }
   }

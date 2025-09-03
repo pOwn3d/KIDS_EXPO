@@ -7,12 +7,10 @@ describe('Basic App Launch', () => {
 
   it('should show welcome screen on launch', async () => {
     // Simple test to verify the app launches
-    console.log('✅ App launched successfully!');
     
     // Wait for any element to appear (basic smoke test)
     await new Promise(resolve => setTimeout(resolve, 2000));
     
-    console.log('✅ App is running and responding!');
   });
 
   it('should handle app backgrounding', async () => {
@@ -21,6 +19,5 @@ describe('Basic App Launch', () => {
     await new Promise(resolve => setTimeout(resolve, 1000));
     await device.launchApp();
     
-    console.log('✅ App handles backgrounding correctly!');
   });
 });

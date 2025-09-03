@@ -19,10 +19,10 @@ import { RewardClaim } from '../../types/api/rewards';
 const RewardClaimsScreen: React.FC = () => {
   const theme = useTheme();
   const {
-    rewardClaims,
+    claims: rewardClaims,
     isLoading,
     error,
-    fetchRewardClaims,
+    fetchClaims: fetchRewardClaims,
     validateClaim,
     rejectClaim,
     clearError,
@@ -121,7 +121,7 @@ const RewardClaimsScreen: React.FC = () => {
     });
   };
 
-  const filteredClaims = rewardClaims.filter(claim => claim.status === selectedTab);
+  const filteredClaims = (rewardClaims || []).filter(claim => claim.status === selectedTab);
 
   const renderClaim = ({ item }: { item: RewardClaim }) => (
     <View style={[styles.claimCard, { backgroundColor: theme.colors.card }]}>
@@ -205,7 +205,7 @@ const RewardClaimsScreen: React.FC = () => {
               { color: selectedTab === 'pending' ? theme.colors.primary : theme.colors.textSecondary },
             ]}
           >
-            En attente ({rewardClaims.filter(c => c.status === 'pending').length})
+            En attente ({(rewardClaims || []).filter(c => c.status === 'pending').length})
           </Text>
         </TouchableOpacity>
 

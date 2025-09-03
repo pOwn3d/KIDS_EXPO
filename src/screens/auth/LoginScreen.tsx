@@ -116,7 +116,7 @@ const LoginScreen: React.FC<Props> = ({ route, navigation }) => {
       textAlign: 'center',
     },
     form: {
-      gap: 20,
+      gap: 10,
     },
     inputContainer: {
       position: 'relative',
@@ -216,7 +216,6 @@ const LoginScreen: React.FC<Props> = ({ route, navigation }) => {
       // Clear any previous errors
       clearError();
 
-      console.log('Starting login...', { userType, email: formData.email });
 
       if (userType === 'parent') {
         if (!formData.email || !formData.password) {
@@ -229,7 +228,6 @@ const LoginScreen: React.FC<Props> = ({ route, navigation }) => {
           password: formData.password,
         });
 
-        console.log('Login successful:', result);
         // La navigation devrait se faire automatiquement via RootNavigator
       } else {
         // Note: Child login functionality would need to be added to the useAuth hook

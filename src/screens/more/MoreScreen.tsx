@@ -105,8 +105,18 @@ interface MenuItem {
 
 export default function MoreScreen({ navigation, route }: Props) {
   const childId = route.params?.childId;
+  
+  // TODO: Get user role from Redux when available
+  const userRole = 'PARENT'; // Default to parent for now
 
   const menuItems: MenuItem[] = [
+    ...(userRole === 'PARENT' ? [{
+      id: 'children',
+      title: 'Enfants',
+      icon: 'people',
+      color: '#2196F3',
+      onPress: () => navigation.navigate('Children' as any),
+    }] : []),
     {
       id: 'activities',
       title: 'Activités',
@@ -143,13 +153,13 @@ export default function MoreScreen({ navigation, route }: Props) {
       color: '#FF9800',
       onPress: () => navigation.navigate('Leaderboard'),
     },
-    {
+    ...(userRole === 'PARENT' ? [{
       id: 'punishments',
       title: 'Punitions',
       icon: 'warning',
       color: '#F44336',
-      onPress: () => navigation.navigate('Punishments', { childId }),
-    },
+      onPress: () => navigation.navigate('Punishments' as any, { childId }),
+    }] : []),
     {
       id: 'statistics',
       title: 'Statistiques',

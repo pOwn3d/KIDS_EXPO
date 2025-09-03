@@ -25,7 +25,6 @@ class LeaderboardService {
       }
       return token;
     } catch (error) {
-      console.error('Erreur lors de la récupération du token:', error);
       return null;
     }
   }
@@ -52,7 +51,6 @@ class LeaderboardService {
     try {
       const headers = await this.getAuthHeaders();
       
-      console.log('🏆 Récupération du classement:', { period, category, limit });
       
       const response = await apiClient.get(
         `${API_URL}/api/leaderboard`,
@@ -66,7 +64,6 @@ class LeaderboardService {
         }
       );
 
-      console.log('📊 Réponse classement:', response.data);
 
       // Gérer différentes structures de réponse possibles
       let leaderboardData = [];
@@ -80,7 +77,6 @@ class LeaderboardService {
 
       return leaderboardData.map((entry: any, index: number) => this.mapLeaderboardEntry(entry, index + 1));
     } catch (error: any) {
-      console.error('❌ Erreur récupération classement:', error);
       throw new Error(error.response?.data?.message || 'Erreur lors de la récupération du classement');
     }
   }
@@ -103,7 +99,6 @@ class LeaderboardService {
 
       return null;
     } catch (error: any) {
-      console.error('Erreur récupération rang enfant:', error);
       throw new Error(error.response?.data?.message || 'Erreur lors de la récupération du rang');
     }
   }
@@ -126,7 +121,6 @@ class LeaderboardService {
 
       return response.data;
     } catch (error: any) {
-      console.error('Erreur récupération stats classement:', error);
       throw new Error(error.response?.data?.message || 'Erreur lors de la récupération des statistiques');
     }
   }

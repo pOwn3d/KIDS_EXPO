@@ -36,12 +36,9 @@ const NotificationsScreen: React.FC = () => {
 
   const loadNotifications = async () => {
     try {
-      console.log('🔔 Chargement des notifications...');
       const allNotifications = await notificationsService.getAllNotifications();
-      console.log('✅ Notifications chargées:', allNotifications.length);
       setNotifications(allNotifications);
     } catch (error: any) {
-      console.error('❌ Erreur chargement notifications:', error);
       // Ne pas afficher d'alerte pour ne pas bloquer l'utilisateur
       setNotifications([]);
     } finally {
@@ -54,7 +51,6 @@ const NotificationsScreen: React.FC = () => {
       const notificationStats = await notificationsService.getNotificationStats();
       setStats(notificationStats);
     } catch (error) {
-      console.error('Erreur chargement stats:', error);
     }
   };
 
@@ -79,7 +75,6 @@ const NotificationsScreen: React.FC = () => {
         }
       }
     } catch (error) {
-      console.error('Erreur marquage notification:', error);
     }
   };
 

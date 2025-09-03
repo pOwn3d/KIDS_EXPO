@@ -8,6 +8,7 @@ import { ActivityIndicator, View } from 'react-native';
 import SimpleMobileTabNavigator from './mobile/SimpleMobileTabNavigator';
 import SimpleDesktopNavigator from './desktop/SimpleDesktopNavigator';
 import EnhancedDesktopNavigator from './desktop/EnhancedDesktopNavigator';
+import ImprovedDesktopNavigator from './desktop/ImprovedDesktopNavigator';
 import AuthNavigator from './AuthNavigator';
 
 // Types
@@ -52,7 +53,6 @@ const RootNavigator: React.FC = () => {
       
       // Clear any stuck loading state
       if (authLoading) {
-        console.log('Clearing stuck auth loading state...');
         dispatch(clearLoading() as any);
       }
     }, 100);
@@ -60,20 +60,12 @@ const RootNavigator: React.FC = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Debug logging
-  useEffect(() => {
-    console.log('RootNavigator state:', {
-      isAuthenticated,
-      authLoading,
-      isInitializing,
-      currentUser: currentUser?.email
-    });
-  }, [isAuthenticated, authLoading, isInitializing, currentUser]);
+  // Debug logging removed
   
   // React to authentication changes
   useEffect(() => {
     if (!isAuthenticated && !authLoading && !isInitializing) {
-      console.log('User logged out, should show Auth screen');
+      // User logged out, should show Auth screen
     }
   }, [isAuthenticated, authLoading, isInitializing]);
 

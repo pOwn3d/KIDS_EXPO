@@ -87,7 +87,6 @@ export const logoutAsync = createAsyncThunk<
       await authService.logout();
     } catch (error: any) {
       // Don't reject on logout errors, just log them
-      console.warn('Logout error:', error);
     }
   }
 );

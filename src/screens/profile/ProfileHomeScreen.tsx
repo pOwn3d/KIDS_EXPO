@@ -60,16 +60,13 @@ const ProfileHomeScreen: React.FC = () => {
   const confirmLogout = async () => {
     try {
       setIsLoading(true);
-      console.log('🚪 Starting logout process with Redux...');
       
       // Utiliser Redux pour gérer la déconnexion
       await dispatch(logoutAsync() as any);
-      console.log('✅ Redux logout completed');
       
       // La navigation vers Auth se fera automatiquement quand isAuthenticated devient false
       
     } catch (error) {
-      console.error('❌ Erreur lors de la déconnexion:', error);
       Alert.alert('Erreur', 'Une erreur est survenue lors de la déconnexion');
     } finally {
       setIsLoading(false);

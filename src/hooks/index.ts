@@ -8,6 +8,7 @@ export { useMissions } from './useMissions';
 export { useRewards } from './useRewards';
 export { usePunishments } from './usePunishments';
 export { useDashboard } from './useDashboard';
+export { useParentAccess } from './useParentAccess';
 
 // Existing hooks (keeping compatibility)
 export { useTheme, useTheme as useSimpleTheme } from './useSimpleTheme';
