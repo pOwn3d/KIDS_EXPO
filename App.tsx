@@ -10,7 +10,6 @@ import Toast from 'react-native-toast-message';
 import { store, persistor } from './src/store/store';
 import RootNavigator from './src/navigation/RootNavigator';
 import { ThemeProvider } from './src/providers/ThemeProvider';
-import { StyledThemeProvider } from './src/providers/StyledThemeProvider';
 import { logout } from './src/store/slices/authSlice';
 import { appEvents } from './src/services/events.service';
 
@@ -64,9 +63,7 @@ export default function App() {
       <PersistGate loading={null} persistor={persistor}>
         <SafeAreaProvider>
           <ThemeProvider>
-            <StyledThemeProvider>
-              <AppContent />
-            </StyledThemeProvider>
+            <AppContent />
           </ThemeProvider>
         </SafeAreaProvider>
       </PersistGate>

@@ -5,10 +5,8 @@ import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, View } from 'react-native';
 
 // Navigation components
-import SimpleMobileTabNavigator from './mobile/SimpleMobileTabNavigator';
-import SimpleDesktopNavigator from './desktop/SimpleDesktopNavigator';
-import EnhancedDesktopNavigator from './desktop/EnhancedDesktopNavigator';
-import ImprovedDesktopNavigator from './desktop/ImprovedDesktopNavigator';
+import MobileNavigator from './mobile/MobileNavigator';
+import DesktopNavigator from './desktop/DesktopNavigator';
 import AuthNavigator from './AuthNavigator';
 
 // Types
@@ -100,8 +98,8 @@ const RootNavigator: React.FC = () => {
 
   // Determine which main navigator to use based on platform
   const MainNavigator = platform.shouldUseDesktopNavigation 
-    ? EnhancedDesktopNavigator 
-    : SimpleMobileTabNavigator;
+    ? DesktopNavigator 
+    : MobileNavigator;
 
   return (
     <NavigationContainer theme={navigationTheme}>

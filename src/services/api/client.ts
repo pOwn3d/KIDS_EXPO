@@ -13,7 +13,7 @@ export interface ApiConfig {
 }
 
 const DEFAULT_CONFIG: ApiConfig = {
-  baseURL: process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000/api',
+  baseURL: process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000',
   timeout: 10000,
   retries: 3,
   retryDelay: 1000,
@@ -113,9 +113,17 @@ export class ApiClient {
    */
   private async isOnline(): Promise<boolean> {
     try {
+      // On web, NetInfo might not work properly, so we assume online
+      if (Platform.OS === 'web') {
+        return true;
+      }
       const netInfo = await NetInfo.fetch();
       return netInfo.isConnected === true;
     } catch (error) {
+      // If NetInfo fails, assume online on web
+      if (Platform.OS === 'web') {
+        return true;
+      }
       return false;
     }
   }

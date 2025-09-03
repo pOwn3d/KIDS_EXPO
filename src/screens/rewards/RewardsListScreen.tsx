@@ -191,6 +191,7 @@ const RewardsListScreen: React.FC = () => {
   const theme = useTheme();
   const navigation = useNavigation();
   const route = useRoute();
+  const userRole = useSelector(selectUserRole);
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [rewardClaims, setRewardClaims] = useState<RewardClaim[]>([]);
   const [availableChildren, setAvailableChildren] = useState<any[]>([]);
