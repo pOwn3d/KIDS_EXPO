@@ -1,88 +1,91 @@
-# 📚 Documentation Kids Points System
+<!-- Header Banner -->
+<div align="center">
 
-Bienvenue dans la documentation complète du projet Kids Points System !
+  <a href="https://git.io/typing-svg">
+    <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=700&size=32&duration=3000&pause=1000&color=6366F1&center=true&vCenter=true&width=600&lines=Kids+Points+System;Gamification+for+Children;Cross-Platform+App" alt="Typing SVG" />
+  </a>
 
-## 📖 Table des matières
+  <br><br>
 
-### 🎯 Introduction
-- [01 - Vue d'ensemble du projet](01-PROJECT-OVERVIEW.md) - Description complète du projet, objectifs et fonctionnalités
+  <!-- Badges -->
+  <img src="https://img.shields.io/badge/Expo-53-000020?style=for-the-badge&logo=expo&logoColor=white" alt="Expo">
+  <img src="https://img.shields.io/badge/React_Native-0.79-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React Native">
+  <img src="https://img.shields.io/badge/TypeScript-5.8-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript">
+  <img src="https://img.shields.io/badge/License-Proprietary-red?style=for-the-badge" alt="License">
 
-### 🏗 Architecture Technique
-- [02 - Architecture Backend](02-BACKEND-ARCHITECTURE.md) - Stack Symfony, API Platform, structure et services
-- [03 - Architecture Frontend](03-FRONTEND-ARCHITECTURE.md) - Expo, React Native, responsive design Mobile/Desktop
+  <br><br>
 
-### 🔌 Intégration
-- [04 - Guide d'intégration API](04-API-INTEGRATION.md) - JWT, endpoints, formats de données, exemples
+  <img src="https://img.shields.io/github/stars/pOwn3d/KIDS_EXPO?style=social" alt="Stars">
+  <img src="https://img.shields.io/github/forks/pOwn3d/KIDS_EXPO?style=social" alt="Forks">
 
-### 🎮 Fonctionnalités
-- [05 - Système de Gamification](05-GAMIFICATION-FEATURES.md) - Points, badges, tournois, pets, guildes et plus
+</div>
 
-### 🚀 Développement
-- [06 - Guide de Développement](06-DEVELOPMENT-GUIDE.md) - Installation, configuration, commandes, déploiement
+<img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png" alt="line">
 
-## 🎯 Quick Start
+## About
 
-### Backend
-```bash
-cd /Users/pOwn3d/Desktop/DEVELOPPEMENT/PERSO/Kids_HA_BACK
-symfony server:start --port=8000
-```
+> **Kids Points System** - Une application de gamification pour enfants permettant aux parents de gerer un systeme de points, missions et recompenses.
+
+<table>
+  <tr>
+    <td align="center" width="25%">
+      <img src="https://img.icons8.com/color/96/trophy.png" width="50"/><br>
+      <b>Points & Badges</b><br>
+      <sub>Systeme de gamification complet</sub>
+    </td>
+    <td align="center" width="25%">
+      <img src="https://img.icons8.com/color/96/task.png" width="50"/><br>
+      <b>Missions</b><br>
+      <sub>Defis quotidiens et hebdomadaires</sub>
+    </td>
+    <td align="center" width="25%">
+      <img src="https://img.icons8.com/color/96/gift.png" width="50"/><br>
+      <b>Recompenses</b><br>
+      <sub>Echangez vos points contre des prix</sub>
+    </td>
+    <td align="center" width="25%">
+      <img src="https://img.icons8.com/color/96/family.png" width="50"/><br>
+      <b>Multi-enfants</b><br>
+      <sub>Gerez plusieurs profils</sub>
+    </td>
+  </tr>
+</table>
+
+<img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png" alt="line">
+
+## Tech Stack
+
+<div align="center">
 
 ### Frontend
-```bash
-cd /Users/pOwn3d/Downloads/KIDS/kids-points-app
-npx expo start
-```
+<img src="https://skillicons.dev/icons?i=react,typescript,redux&theme=dark" alt="Frontend Stack"/>
 
-## 🔗 Liens Rapides
+### Backend
+<img src="https://skillicons.dev/icons?i=symfony,php,postgres&theme=dark" alt="Backend Stack"/>
 
-### Développement
-- **API Documentation**: http://localhost:8000/api/docs
-- **Symfony Profiler**: http://localhost:8000/_profiler
-- **Expo Dev**: http://localhost:19002
+### Tools
+<img src="https://skillicons.dev/icons?i=docker,git,figma&theme=dark" alt="Tools"/>
 
-### Ressources
-- Backend: `/Users/pOwn3d/Desktop/DEVELOPPEMENT/PERSO/Kids_HA_BACK`
-- Frontend: `/Users/pOwn3d/Downloads/KIDS/kids-points-app`
-- Database: PostgreSQL `193.108.54.154:5432`
+</div>
 
-## 📊 État du Projet
+<img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png" alt="line">
 
-### ✅ Complété
-- ✅ Backend API 100% fonctionnel
-- ✅ Base de données PostgreSQL
-- ✅ Authentification JWT
-- ✅ Documentation complète
-
-### 🔄 En cours
-- 🔄 Application Expo cross-platform
-- 🔄 Interface responsive Mobile/Desktop
-- 🔄 Intégration complète API
-
-### 📅 À venir
-- 📅 Tests E2E
-- 📅 Déploiement production
-- 📅 Publication App Stores
-
-## 🏗 Architecture Globale
+## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                     Frontend (Expo)                      │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐    │
-│  │   Mobile    │  │   Tablet    │  │   Desktop   │    │
-│  │  iOS/Android│  │   iPadOS    │  │   Web/PWA   │    │
-│  └─────────────┘  └─────────────┘  └─────────────┘    │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐     │
+│  │   Mobile    │  │   Tablet    │  │   Desktop   │     │
+│  │  iOS/Android│  │   iPadOS    │  │   Web/PWA   │     │
+│  └─────────────┘  └─────────────┘  └─────────────┘     │
 └─────────────────────────┬───────────────────────────────┘
                           │ HTTPS/JWT
 ┌─────────────────────────▼───────────────────────────────┐
 │                  Backend API (Symfony)                   │
-│  ┌──────────────────────────────────────────────────┐  │
-│  │            API Platform / REST API                │  │
-│  └──────────────────────────────────────────────────┘  │
-│  ┌──────────────────────────────────────────────────┐  │
-│  │          Business Logic / Services               │  │
-│  └──────────────────────────────────────────────────┘  │
+│  ┌──────────────────────────────────────────────────┐   │
+│  │            API Platform / REST API                │   │
+│  └──────────────────────────────────────────────────┘   │
 └─────────────────────────┬───────────────────────────────┘
                           │
 ┌─────────────────────────▼───────────────────────────────┐
@@ -90,31 +93,90 @@ npx expo start
 └──────────────────────────────────────────────────────────┘
 ```
 
-## 👥 Utilisateurs Types
+<img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png" alt="line">
 
-### 👨‍👩‍👧‍👦 Parents
+## Features
+
+### Parents
 - Gestion des enfants
-- Création de missions
-- Validation des complétions
-- Gestion des récompenses
-- Accès aux statistiques
+- Creation de missions
+- Validation des completions
+- Gestion des recompenses
+- Acces aux statistiques
 
-### 👶 Enfants
-- Profil personnalisé
-- Complétion de missions
-- Échange de récompenses
+### Enfants
+- Profil personnalise
+- Completion de missions
+- Echange de recompenses
 - Participation aux tournois
-- Interaction avec pets
+- Interaction avec pets virtuels
 
-## 🎮 Modules Principaux
+### Gamification
+- **Badges** - Debloquez des reussites
+- **Niveaux** - Progressez dans le jeu
+- **Guildes** - Jouez en equipe
+- **Tournois** - Competez entre amis
+- **Pets** - Compagnons virtuels evolutifs
 
-1. **Core System** - Enfants, Missions, Points, Récompenses
-2. **Gamification** - Badges, Niveaux, Achievements
-3. **Social** - Guildes, Tournois, Classements
-4. **Pets** - Compagnons virtuels évolutifs
-5. **AI** - Sparky assistant, missions adaptatives
+<img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png" alt="line">
 
-## 🔐 Sécurité
+## Platforms
+
+| Platform | Status | Navigation | Layout |
+|:--------:|:------:|:----------:|:------:|
+| iOS | ✅ | Bottom Tabs | Single Column |
+| Android | ✅ | Bottom Tabs | Single Column |
+| iPad | ✅ | Bottom Tabs | Multi Column |
+| Web Desktop | ✅ | Sidebar | Multi Column |
+| PWA | ✅ | Adaptive | Responsive |
+
+<img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png" alt="line">
+
+## Quick Start
+
+```bash
+# Clone
+git clone https://github.com/pOwn3d/KIDS_EXPO.git
+cd KIDS_EXPO
+
+# Install
+npm install
+
+# Run
+npx expo start
+```
+
+<img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png" alt="line">
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [Project Overview](doc/01-PROJECT-OVERVIEW.md) | Vue d'ensemble complete |
+| [Backend Architecture](doc/02-BACKEND-ARCHITECTURE.md) | Stack Symfony & API |
+| [Frontend Architecture](doc/03-FRONTEND-ARCHITECTURE.md) | Expo & React Native |
+| [API Integration](doc/04-API-INTEGRATION.md) | Guide d'integration |
+| [Gamification](doc/05-GAMIFICATION-FEATURES.md) | Systeme de jeu |
+| [Development Guide](doc/06-DEVELOPMENT-GUIDE.md) | Guide developpeur |
+
+<img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png" alt="line">
+
+## Roadmap
+
+| Status | Milestone | Date |
+|:------:|-----------|------|
+| ✅ | Backend API | Q1 2025 |
+| ✅ | Database Schema | Q1 2025 |
+| ✅ | Authentication | Q1 2025 |
+| 🔄 | Frontend MVP | Q1 2025 |
+| 📅 | Complete UI/UX | Q2 2025 |
+| 📅 | Testing Suite | Q2 2025 |
+| 📅 | Production Launch | Q3 2025 |
+| 📅 | App Store Release | Q3 2025 |
+
+<img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png" alt="line">
+
+## Security
 
 - JWT Authentication
 - Refresh Tokens
@@ -123,73 +185,23 @@ npx expo start
 - CORS Protection
 - Input Validation
 
-## 📱 Plateformes Supportées
+<img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png" alt="line">
 
-| Plateforme | Statut | Navigation | Layout |
-|------------|--------|------------|---------|
-| iOS | ✅ | Bottom Tabs | Single Column |
-| Android | ✅ | Bottom Tabs | Single Column |
-| iPad | ✅ | Bottom Tabs | Multi Column |
-| Web Desktop | ✅ | Sidebar | Multi Column |
-| PWA | ✅ | Adaptive | Responsive |
+<div align="center">
 
-## 🛠 Stack Technique
+### Author
 
-### Backend
-- **Symfony 7.2 LTS**
-- **API Platform 3.x**
-- **PostgreSQL 15**
-- **JWT Auth**
-- **Doctrine ORM**
+**Made with passion by [Christophe Lopez](https://github.com/pOwn3d)**
 
-### Frontend
-- **Expo SDK 50+**
-- **React Native**
-- **TypeScript**
-- **Redux Toolkit**
-- **React Navigation 6**
+<a href="https://www.linkedin.com/in/christophe-lopez/">
+  <img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn">
+</a>
+<a href="https://github.com/pOwn3d">
+  <img src="https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white" alt="GitHub">
+</a>
 
-## 📈 Roadmap
+<br><br>
 
-### Q1 2025
-- [x] Backend API
-- [x] Database Schema
-- [x] Authentication
-- [ ] Frontend MVP
+<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=6,11,20&height=100&section=footer" width="100%"/>
 
-### Q2 2025
-- [ ] Complete UI/UX
-- [ ] Gamification Features
-- [ ] Testing Suite
-- [ ] Beta Launch
-
-### Q3 2025
-- [ ] Production Launch
-- [ ] App Store Release
-- [ ] Marketing Campaign
-- [ ] User Feedback
-
-## 🤝 Contribution
-
-Pour contribuer au projet :
-1. Fork le repository
-2. Créer une branche feature
-3. Commiter les changements
-4. Push vers la branche
-5. Ouvrir une Pull Request
-
-## 📄 License
-
-Ce projet est propriétaire et confidentiel.
-
-## 📞 Support
-
-Pour toute question ou assistance :
-- Documentation: Ce dossier `/doc`
-- API Docs: http://localhost:8000/api/docs
-- Issues: GitHub Issues
-
----
-
-*Documentation générée le 29/08/2025*# KIDS_EXPO
-# KIDS_EXPO
+</div>
